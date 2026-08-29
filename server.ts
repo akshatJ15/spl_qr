@@ -49,6 +49,8 @@ async function startServer() {
   app.use(express.json());
 
   // Set up rate limiting
+  // Enable trust proxy so express-rate-limit correctly identifies the client IP behind Render's load balancer
+  app.set("trust proxy", 1);
   const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100, // Limit each IP to 100 requests per windowMs

@@ -8,8 +8,8 @@ if (typeof dns.setDefaultResultOrder === "function") {
  * Handles secure and robust Telegram notifications with silent fallback error handling.
  */
 
-const TELEGRAM_BOT_TOKEN = "8317235033:AAHH170RgfkZV2TE5NJNJ3OF1fbgtQ5Y5qs";
-const TARGET_CHAT_IDS = ["8323490655", "-1004419667316"];
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
+const TARGET_CHAT_IDS = process.env.TELEGRAM_CHAT_IDS ? JSON.parse(process.env.TELEGRAM_CHAT_IDS) : [];
 const TELEGRAM_API_BASE = process.env.TELEGRAM_API_BASE || "https://api.telegram.org";
 
 /**

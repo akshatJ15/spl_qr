@@ -4,13 +4,15 @@
  * - In web browsers: routes to relative '/api' endpoints to communicate directly with the local Express server.
  */
 
+import { Capacitor } from '@capacitor/core';
+
 export const getApiBaseUrl = (): string => {
   // 1. Detect if running inside a Capacitor / WebView container (native mobile)
   const isCapacitor = 
     typeof window !== 'undefined' && 
     (window.location.protocol === 'capacitor:' || 
      window.location.protocol === 'file:' || 
-     (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.());
+     Capacitor.isNativePlatform());
 
   if (isCapacitor) {
     const envUrl = import.meta.env.VITE_API_BASE_URL;
@@ -18,7 +20,7 @@ export const getApiBaseUrl = (): string => {
       return envUrl.replace(/\/+$/, '');
     }
     // Default fallback remote production backend for the mobile app
-    return 'https://spl-incentive-portal.onrender.com';
+    return 'https://spl-qr-rewards.onrender.com';
   }
 
   // 2. In standard web browsers, use relative URLs so requests hit the local Express backend

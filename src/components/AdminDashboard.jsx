@@ -269,8 +269,49 @@ export default function AdminDashboard() {
     }
   };
 
-  // Triggers print view on client
-  const handlePrint = () => {
+  const handlePrint = async () => {
+    try {
+      const { Capacitor } = await import('@capacitor/core');
+      if (Capacitor.isNativePlatform()) {
+        const { Share } = await import('@capacitor/share');
+        const html2canvas = (await import('html2canvas')).default;
+        
+        const printArea = document.querySelector('.print-area') || document.body;
+        addLog('action', 'Generating QR grid image for sharing...');
+        
+        const canvas = await html2canvas(printArea, {
+          scale: 2,
+          useCORS: true,
+          logging: false
+        });
+        
+        const dataUrl = canvas.toDataURL('image/png');
+        
+        const { Filesystem, Directory } = await import('@capacitor/filesystem');
+        const fileName = `QR-Batch-${new Date().getTime()}.png`;
+        
+        // Write the base64 string (without the prefix) to the cache directory
+        const base64Data = dataUrl.split(',')[1];
+        const savedFile = await Filesystem.writeFile({
+          path: fileName,
+          data: base64Data,
+          directory: Directory.Cache
+        });
+        
+        await Share.share({
+          title: 'QR Code Batch',
+          text: 'Here are the generated QR codes for printing.',
+          url: savedFile.uri,
+          dialogTitle: 'Share QR Codes'
+        });
+        
+        addLog('success', 'Image generated and shared successfully.');
+        return;
+      }
+    } catch (e) {
+      console.warn('Native sharing failed, falling back to window.print()', e);
+    }
+    
     window.print();
   };
 

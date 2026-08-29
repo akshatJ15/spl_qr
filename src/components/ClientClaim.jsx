@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
-import ClientLogin from './ClientLogin';
+import UnifiedAuthScreen from './UnifiedAuthScreen';
 import { apiUrl } from '../utils/api';
 import { 
   Loader2, 
@@ -29,9 +29,6 @@ export default function ClientClaim() {
   const [step, setStep] = useState('verifying'); // 'verifying', 'ready', 'claiming', 'claimed', 'error'
   const [pointsAvailable, setPointsAvailable] = useState(0);
   const [errorMsg, setErrorMsg] = useState(null);
-
-  // Popup state on scan
-  const [showApkPopup, setShowApkPopup] = useState(false);
 
   // Authentication states
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('clientToken'));
@@ -71,8 +68,6 @@ export default function ClientClaim() {
 
         setPointsAvailable(data.points);
         setStep('ready');
-        // Show gentle, elegant popup modal prompting APK download
-        setShowApkPopup(true);
       } catch (err) {
         console.error('Verify token failed:', err);
         setErrorMsg(err.message || 'An error occurred during verification.');
@@ -119,13 +114,11 @@ export default function ClientClaim() {
     }
   }, [isLoggedIn]);
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = (user, token) => {
+    localStorage.setItem('clientToken', token);
+    localStorage.setItem('clientUser', JSON.stringify(user));
     setIsLoggedIn(true);
-    try {
-      setUserProfile(JSON.parse(localStorage.getItem('clientUser') || 'null'));
-    } catch {
-      setUserProfile(null);
-    }
+    setUserProfile(user);
     setStep('ready');
   };
 
@@ -191,39 +184,9 @@ export default function ClientClaim() {
     }
   };
 
-  const triggerApkDownload = () => {
-    const link = document.createElement('a');
-    link.href = '/download-apk';
-    link.download = 'QR-Incentive-Rewards.apk';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    setShowApkPopup(false);
-  };
-
   return (
     <div className="w-full max-w-sm sm:max-w-md mx-auto flex flex-col items-center">
       
-      {/* Subtle, beautiful top APK Banner (matching screenshot exactly) */}
-      <div className="w-full mb-4 bg-gradient-to-r from-blue-50/90 to-indigo-50/90 border border-blue-100/80 rounded-2xl p-3 flex items-center justify-between gap-3 shadow-2xs">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-xs shrink-0">
-            <Smartphone className="w-5 h-5" />
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-gray-900 leading-tight">Get Android App</h4>
-            <p className="text-[11px] text-gray-500 mt-0.5">Scan anytime & track benefits</p>
-          </div>
-        </div>
-        <button
-          onClick={triggerApkDownload}
-          className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-xl text-xs font-bold flex items-center gap-1 transition-all shadow-xs cursor-pointer shrink-0"
-        >
-          <span>Get APK</span>
-          <ChevronRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
       {/* Verified Points Header Pill */}
       {step !== 'error' && (
         <div className="text-center mb-3">
@@ -294,7 +257,11 @@ export default function ClientClaim() {
             exit={{ opacity: 0, y: -8 }}
             className="w-full"
           >
-            <ClientLogin onLoginSuccess={handleLoginSuccess} />
+            <UnifiedAuthScreen 
+              initialRole="user"
+              onUserLoginSuccess={handleLoginSuccess}
+              onAdminLoginSuccess={() => {}}
+            />
           </motion.div>
         )}
 
@@ -390,62 +357,6 @@ export default function ClientClaim() {
           </motion.div>
         )}
 
-      </AnimatePresence>
-
-      {/* ============================================================ */}
-      {/* 🌟 ELEGANT SCAN DOWNLOAD POPUP MODAL */}
-      {/* ============================================================ */}
-      <AnimatePresence>
-        {showApkPopup && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 15 }}
-              className="relative w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl border border-gray-100 flex flex-col items-center text-center"
-            >
-              <button
-                onClick={() => setShowApkPopup(false)}
-                className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-gray-600 rounded-full bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
-                aria-label="Close modal"
-              >
-                <X className="w-4 h-4" />
-              </button>
-
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 mb-4">
-                <Smartphone className="w-7 h-7" />
-              </div>
-
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full mb-1">
-                Fast 1-Tap Experience
-              </span>
-
-              <h3 className="text-lg font-bold text-gray-900 mt-1">
-                Download Android App
-              </h3>
-              <p className="text-xs text-gray-500 mt-1.5 leading-relaxed px-2">
-                Install our official Android app for instant camera scanning, direct cash rewards, and real-time history tracking.
-              </p>
-
-              <div className="w-full flex flex-col gap-2.5 mt-5">
-                <button
-                  onClick={triggerApkDownload}
-                  className="w-full py-3.5 px-4 bg-blue-600 hover:bg-blue-700 active:scale-98 text-white rounded-xl font-bold text-xs sm:text-sm shadow-md shadow-blue-600/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Download App (.apk)</span>
-                </button>
-
-                <button
-                  onClick={() => setShowApkPopup(false)}
-                  className="w-full py-2.5 text-xs font-semibold text-gray-500 hover:text-gray-800 transition-colors cursor-pointer"
-                >
-                  Continue on Web
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
       </AnimatePresence>
 
     </div>

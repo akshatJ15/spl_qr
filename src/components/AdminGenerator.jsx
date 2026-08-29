@@ -51,7 +51,31 @@ export default function AdminGenerator() {
     }
   };
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
+    try {
+      const { Capacitor } = await import('@capacitor/core');
+      if (Capacitor.isNativePlatform()) {
+        const { Share } = await import('@capacitor/share');
+        const { Filesystem, Directory } = await import('@capacitor/filesystem');
+        const html2canvas = (await import('html2canvas')).default;
+        
+        const printArea = document.querySelector('.print-area') || document.body;
+        const canvas = await html2canvas(printArea, { scale: 2, useCORS: true });
+        const dataUrl = canvas.toDataURL('image/png');
+        
+        const fileName = `QR-${new Date().getTime()}.png`;
+        const savedFile = await Filesystem.writeFile({
+          path: fileName,
+          data: dataUrl.split(',')[1],
+          directory: Directory.Cache
+        });
+        
+        await Share.share({ url: savedFile.uri });
+        return;
+      }
+    } catch (e) {
+      console.warn('Native sharing failed, falling back to window.print()', e);
+    }
     window.print();
   };
 

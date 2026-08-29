@@ -1,6 +1,6 @@
 {
-  "time": "2026-08-29T10:26:32.982Z",
-  "status": "no_uri",
-  "mongoUriPresent": false,
-  "readyState": 0
+  "time": "2026-08-29T17:21:21.437Z",
+  "status": "connected",
+  "mongoUriPresent": true,
+  "readyState": 1
 }

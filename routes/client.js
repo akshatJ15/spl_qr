@@ -5,7 +5,7 @@ import QrToken from '../models/QrToken.js';
 import { sendTelegramAlert } from '../utils/telegram.js';
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'QR_INCENTIVE_DEFAULT_SECRET';
+const getJwtSecret = () => process.env.JWT_SECRET || 'QR_INCENTIVE_DEFAULT_SECRET';
 
 // Middleware to authenticate client and populate req.user
 const requireClientAuth = async (req, res, next) => {
@@ -28,21 +28,14 @@ const requireClientAuth = async (req, res, next) => {
 
     let decoded;
     try {
-      decoded = jwt.verify(token, JWT_SECRET);
+      decoded = jwt.verify(token, getJwtSecret());
     } catch (err) {
-      // If token expired, decode unverified payload to see if user exists
-      const unverified = jwt.decode(token);
-      if (unverified && (unverified.userId || unverified.phone)) {
-        console.warn(`[CLIENT AUTH] Token expired for user ${unverified.phone || unverified.userId}. Resiliently recovering session.`);
-        decoded = unverified;
-      } else {
-        return res.status(401).json({
-          success: false,
-          error: 'Session has expired. Please sign in again.',
-          expired: true,
-          details: err.message
-        });
-      }
+      return res.status(401).json({
+        success: false,
+        error: 'Session has expired or is invalid. Please sign in again.',
+        expired: true,
+        details: err.message
+      });
     }
 
     // Fetch user to populate phone and _id properties
@@ -53,18 +46,7 @@ const requireClientAuth = async (req, res, next) => {
     
     // Fallback: If not found by ID but we have phone number in the JWT
     if (!user && decoded.phone) {
-      console.log(`--> Resilient Lookup: User ID ${decoded.userId} not found. Attempting lookup by phone: ${decoded.phone}`);
       user = await User.findOne({ phone: decoded.phone });
-    }
-
-    // Secondary Fallback: If still not found but we have phone, auto-recreate user document (resilient against database resets/switches)
-    if (!user && decoded.phone) {
-      console.log(`--> Persistent Recovery: Auto-registering missing user in active MongoDB instance for phone: ${decoded.phone}`);
-      user = await User.findOneAndUpdate(
-        { phone: decoded.phone },
-        { phone: decoded.phone, name: decoded.name || 'Client User', points: 0 },
-        { new: true, upsert: true }
-      );
     }
 
     if (!user) {
@@ -105,7 +87,10 @@ router.post('/auth', async (req, res) => {
       });
     }
 
-    const trimmedPhone = String(phone).trim();
+    let trimmedPhone = String(phone).trim().replace(/\D/g, '');
+    if (trimmedPhone.startsWith('91') && trimmedPhone.length > 10) {
+      trimmedPhone = trimmedPhone.substring(trimmedPhone.length - 10);
+    }
     const trimmedName = String(name).trim();
 
     if (trimmedPhone === '8650124154') {
@@ -115,12 +100,20 @@ router.post('/auth', async (req, res) => {
       });
     }
 
-    // DATABASE FORCED WRITE via findOneAndUpdate with upsert: true
-    const user = await User.findOneAndUpdate(
-      { phone: trimmedPhone },
-      { phone: trimmedPhone, name: trimmedName },
-      { new: true, upsert: true }
-    );
+    const existingUser = await User.findOne({ phone: trimmedPhone });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        error: 'This phone number is already registered. Please sign in instead.'
+      });
+    }
+
+    // DATABASE FORCED WRITE via create since user does not exist
+    const user = await User.create({
+      phone: trimmedPhone,
+      name: trimmedName,
+      points: 0
+    });
 
     console.log("--> DB USER SAVED:", user);
 
@@ -130,7 +123,7 @@ router.post('/auth', async (req, res) => {
         phone: user.phone,
         name: user.name
       },
-      JWT_SECRET,
+      getJwtSecret(),
       { expiresIn: '365d' }
     );
 
@@ -230,7 +223,10 @@ router.post('/check-phone', async (req, res) => {
     if (!phone) {
       return res.status(400).json({ success: false, error: 'Phone number is required.' });
     }
-    const trimmedPhone = String(phone).trim();
+    let trimmedPhone = String(phone).trim().replace(/\D/g, '');
+    if (trimmedPhone.startsWith('91') && trimmedPhone.length > 10) {
+      trimmedPhone = trimmedPhone.substring(trimmedPhone.length - 10);
+    }
     const user = await User.findOne({ phone: trimmedPhone });
     return res.status(200).json({
       success: true,
@@ -250,7 +246,10 @@ router.post('/login-phone', async (req, res) => {
     if (!phone) {
       return res.status(400).json({ success: false, error: 'Phone number is required.' });
     }
-    const trimmedPhone = String(phone).trim();
+    let trimmedPhone = String(phone).trim().replace(/\D/g, '');
+    if (trimmedPhone.startsWith('91') && trimmedPhone.length > 10) {
+      trimmedPhone = trimmedPhone.substring(trimmedPhone.length - 10);
+    }
     if (trimmedPhone === '8650124154') {
       return res.status(403).json({ success: false, error: 'Admin accounts cannot sign in as client users.' });
     }
@@ -270,7 +269,7 @@ router.post('/login-phone', async (req, res) => {
         phone: user.phone,
         name: user.name
       },
-      JWT_SECRET,
+      getJwtSecret(),
       { expiresIn: '365d' }
     );
 

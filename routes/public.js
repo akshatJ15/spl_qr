@@ -65,39 +65,16 @@ router.get('/db-status', async (req, res) => {
       3: 'disconnecting'
     };
 
-    let pingOk = false;
-    let pingError = null;
-    let collectionsList = [];
-
-    if (readyState === 1) {
-      try {
-        const admin = mongoose.connection.db.admin();
-        const ping = await admin.ping();
-        pingOk = !!ping;
-        const cols = await mongoose.connection.db.listCollections().toArray();
-        collectionsList = cols.map(c => c.name);
-      } catch (err) {
-        pingError = err.message;
-      }
-    }
-
+    // Restricted output to prevent leaking database schema or environment secrets
     return res.status(200).json({
       success: true,
       readyState,
-      stateLabel: states[readyState],
-      mongoUriConfigured: !!(process.env.MONGO_URI || process.env.MONGODB_URI),
-      pingOk,
-      pingError,
-      availableCollections: collectionsList,
-      env: {
-        NODE_ENV: process.env.NODE_ENV,
-        hasJwtSecret: !!process.env.JWT_SECRET
-      }
+      stateLabel: states[readyState]
     });
   } catch (e) {
     return res.status(500).json({
       success: false,
-      error: e.message
+      error: 'Failed to retrieve database status.'
     });
   }
 });

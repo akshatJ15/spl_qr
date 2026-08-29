@@ -4,42 +4,63 @@ import jwt from 'jsonwebtoken';
 import QrToken from '../models/QrToken.js';
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'QR_INCENTIVE_DEFAULT_SECRET';
+const getJwtSecret = () => process.env.JWT_SECRET || 'QR_INCENTIVE_DEFAULT_SECRET';
 
 // requireAdminAuth middleware checks JWT or falls back gracefully for sandbox testing
 const requireAdminAuth = (req, res, next) => {
   const authHeader = req.headers.authorization;
   
   if (!authHeader) {
-    // Graceful fallback for test/sandbox previewing without rigid login requirements
-    req.admin = { mock: true, phone: '8650124154', name: 'Sandbox Administrator' };
-    return next();
+    return res.status(401).json({ success: false, error: 'Authorization header is missing.' });
   }
   
   const token = authHeader.split(' ')[1];
   
-  // Resiliently support sandbox preview tokens
-  if (!token || token === 'MOCK_ADMIN_TOKEN' || token.startsWith('MOCK_') || token.startsWith('ADMIN_')) {
-    req.admin = { mock: true, phone: '8650124154', name: 'Sandbox Administrator' };
-    return next();
+  if (!token) {
+    return res.status(401).json({ success: false, error: 'Token is missing.' });
   }
   
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, getJwtSecret());
     req.admin = decoded;
-    console.log(`[BACKEND AUTH ADMIN.JS] Valid JWT Verified. Admin phone: ${decoded.phone}`);
     return next();
   } catch (err) {
-    // If token verification fails, fallback gracefully to permit admin operations
-    const unverified = jwt.decode(token);
-    console.warn(`[BACKEND AUTH ADMIN.JS] Token verification warning (${err.message}). Permitting admin access.`);
-    req.admin = unverified || { mock: true, phone: '8650124154', name: 'Administrator' };
-    return next();
+    return res.status(401).json({ success: false, error: 'Invalid or expired admin token.' });
   }
 };
 
+// POST /api/admin/login
+router.post('/login', (req, res) => {
+  try {
+    const { pin } = req.body;
+    const adminPin = process.env.ADMIN_PIN;
+
+    if (!adminPin) {
+      return res.status(500).json({ success: false, error: 'Admin PIN is not configured on the server.' });
+    }
+
+    if (String(pin).trim() !== String(adminPin).trim()) {
+      return res.status(401).json({ success: false, error: 'Invalid admin PIN.' });
+    }
+
+    const token = jwt.sign(
+      { role: 'admin', phone: '8650124154', name: 'Administrator' },
+      getJwtSecret(),
+      { expiresIn: '24h' }
+    );
+
+    return res.status(200).json({
+      success: true,
+      token,
+      admin: { phone: '8650124154', name: 'Administrator' }
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: 'Internal server error during login.' });
+  }
+});
+
 // POST /api/admin/generate-qr
-router.post('/generate-qr', async (req, res) => {
+router.post('/generate-qr', requireAdminAuth, async (req, res) => {
   try {
     const { points } = req.body;
 

@@ -24,16 +24,26 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
       return;
     }
 
-    // Direct static checks as explicitly requested
-    if (formattedNo === '7217251263' && formattedPass === '1234') {
-      setIsSuccess(true);
-      sessionStorage.setItem('isAdminAuthenticated', 'true');
-      sessionStorage.setItem('adminToken', 'MOCK_ADMIN_TOKEN');
-      setTimeout(() => {
-        onLoginSuccess();
-      }, 800);
-    } else {
-      setError('Invalid system credentials. Please check your login number and password.');
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: formattedPass }),
+      });
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setIsSuccess(true);
+        sessionStorage.setItem('isAdminAuthenticated', 'true');
+        sessionStorage.setItem('adminToken', data.token);
+        setTimeout(() => {
+          onLoginSuccess();
+        }, 800);
+      } else {
+        setError(data.error || 'Invalid system credentials. Please check your login number and password.');
+      }
+    } catch (err) {
+      setError('An error occurred during authentication.');
     }
   };
 

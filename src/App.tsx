@@ -3,8 +3,9 @@ import AdminDashboard from './components/AdminDashboard';
 import ClientClaim from './components/ClientClaim';
 import UserDashboard from './components/UserDashboard';
 import UnifiedAuthScreen from './components/UnifiedAuthScreen';
-import { Gift, ShieldCheck, Database, HelpCircle, LogOut, User, Smartphone, QrCode } from 'lucide-react';
+import { Gift, ShieldCheck, LogOut, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Toaster } from 'react-hot-toast';
 
 interface UserProfile {
   _id: string;
@@ -17,12 +18,10 @@ export default function App() {
   const [route, setRoute] = useState<'app' | 'claim'>('app');
   const [currentToken, setCurrentToken] = useState('');
 
-  // Admin Auth State
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
     return sessionStorage.getItem('isAdminAuthenticated') === 'true';
   });
 
-  // Client User Auth State
   const [clientUser, setClientUser] = useState<UserProfile | null>(() => {
     try {
       const stored = localStorage.getItem('clientUser');
@@ -32,32 +31,25 @@ export default function App() {
     }
   });
 
-  // Handle URL changes & token query parameters
   useEffect(() => {
     const handleUrlChange = () => {
       const params = new URLSearchParams(window.location.search);
       const pathname = window.location.pathname;
       const token = params.get('token');
-
       if (token || pathname.includes('/claim')) {
         setRoute('claim');
-        if (token) {
-          setCurrentToken(token);
-        }
+        if (token) setCurrentToken(token);
       } else {
         setRoute('app');
       }
     };
-
     handleUrlChange();
     window.addEventListener('popstate', handleUrlChange);
     return () => window.removeEventListener('popstate', handleUrlChange);
   }, []);
 
-  // Admin Login Handler
   const handleAdminLoginSuccess = () => {
     sessionStorage.setItem('isAdminAuthenticated', 'true');
-    sessionStorage.setItem('adminToken', 'ADMIN_SESSION_ACTIVE');
     setIsAdminAuthenticated(true);
   };
 
@@ -67,7 +59,6 @@ export default function App() {
     setIsAdminAuthenticated(false);
   };
 
-  // Client User Login Handler
   const handleUserLoginSuccess = (user: UserProfile, token: string) => {
     localStorage.setItem('clientToken', token);
     localStorage.setItem('clientUser', JSON.stringify(user));
@@ -85,10 +76,38 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-gray-900 flex flex-col antialiased font-sans transition-colors duration-200">
+    <div className="min-h-dvh flex flex-col antialiased font-sans text-gray-900">
+      <Toaster 
+        position="top-center"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            fontFamily: "'Inter', sans-serif",
+            fontSize: '13px',
+            fontWeight: 600,
+            borderRadius: '14px',
+            padding: '12px 16px',
+            boxShadow: '0 8px 24px oklch(0.3 0.02 270 / 0.12)',
+          },
+          success: {
+            style: {
+              background: 'oklch(0.97 0.04 155)',
+              color: 'oklch(0.25 0.10 155)',
+              border: '1px solid oklch(0.90 0.06 155 / 0.5)',
+            },
+          },
+          error: {
+            style: {
+              background: 'oklch(0.97 0.04 25)',
+              color: 'oklch(0.30 0.12 25)',
+              border: '1px solid oklch(0.90 0.06 25 / 0.5)',
+            },
+          },
+        }}
+      />
       
-      {/* Universal Responsive Header */}
-      <header className="print:hidden w-full bg-white border-b border-gray-100 py-3.5 px-4 sm:px-6 sticky top-0 z-50 shadow-2xs">
+      {/* ===== HEADER ===== */}
+      <header className="print:hidden header-bar w-full py-3.5 px-4 sm:px-6 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div 
             onClick={() => {
@@ -98,49 +117,45 @@ export default function App() {
                 setCurrentToken('');
               }
             }}
-            className="flex items-center gap-2 cursor-pointer select-none"
+            className="flex items-center gap-2.5 cursor-pointer select-none group"
           >
-            <div className="p-1.5 bg-blue-600 text-white rounded-xl shadow-xs">
+            <div className="p-2 bg-gradient-to-br from-brand-500 to-brand-700 text-white rounded-xl shadow-sm transition-transform group-hover:scale-105" style={{ boxShadow: '0 4px 12px oklch(0.48 0.22 268 / 0.25)' }}>
               <Gift className="w-5 h-5" />
             </div>
             <div>
-              <span className="font-bold text-base sm:text-lg tracking-tight text-gray-900 block leading-tight">
-                QR Incentive Core
+              <span className="font-bold text-base sm:text-lg tracking-tight text-gray-900 block leading-tight gradient-text">
+                QR Rewards
               </span>
-              <span className="text-[10px] text-gray-400 font-mono hidden sm:block leading-none mt-0.5">
-                Multi-Role Rewards Engine
+              <span className="text-[10px] text-gray-400 font-medium hidden sm:block leading-none mt-0.5">
+                Incentive Rewards Platform
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-4 text-xs font-medium">
-            {/* Status Pills for Desktop */}
-            <span className="hidden md:flex items-center gap-1 bg-green-50 text-green-700 px-2.5 py-1 rounded-full border border-green-100 font-mono text-[11px]">
-              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-              ONLINE
+          <div className="flex items-center gap-2.5 sm:gap-3 text-xs font-medium">
+            {/* Online badge */}
+            <span className="hidden md:flex items-center gap-1.5 pill-success px-2.5 py-1 rounded-full text-[11px] font-semibold">
+              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+              Online
             </span>
 
-            {/* If on web claim page, allow navigating to App Home */}
             {route === 'claim' && (
               <button
-                id="header-nav-app-btn"
                 onClick={() => {
                   window.history.pushState({}, '', '/');
                   setRoute('app');
                   setCurrentToken('');
                 }}
-                className="px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                className="pill-brand px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer hover:bg-brand-100 transition-colors"
               >
-                Go to Portal Home
+                Portal Home
               </button>
             )}
 
-            {/* Admin Sign Out */}
             {route === 'app' && isAdminAuthenticated && (
               <button
-                id="header-admin-logout-btn"
                 onClick={handleAdminLogout}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 text-gray-700 hover:text-rose-600 hover:bg-rose-50 border border-gray-200 rounded-xl font-semibold transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-2 glass-card rounded-xl font-semibold text-gray-600 hover:text-rose-600 hover:border-rose-200 transition-all cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Admin</span> Sign Out
@@ -150,57 +165,53 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Container */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8 flex flex-col items-center justify-center">
+      {/* ===== MAIN CONTENT ===== */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-3 sm:px-6 py-5 sm:py-10 flex flex-col items-center justify-center">
         <AnimatePresence mode="wait">
           {route === 'claim' ? (
-            /* External Physical QR Scan Flow */
             <motion.div
               key="claim-view"
               className="w-full flex flex-col items-center"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.2 }}
+              initial={{ opacity: 0, y: 16, filter: 'blur(4px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -16, filter: 'blur(4px)' }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
             >
               <ClientClaim />
             </motion.div>
           ) : isAdminAuthenticated ? (
-            /* Admin Console Dashboard */
             <motion.div
               key="admin-view"
               className="print:p-0 print:border-none print:shadow-none w-full flex flex-col items-center"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.2 }}
+              initial={{ opacity: 0, y: 16, filter: 'blur(4px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -16, filter: 'blur(4px)' }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div className="print:hidden text-center max-w-lg mb-6 sm:mb-8">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded-full text-xs font-semibold mb-2">
+              <div className="print:hidden text-center max-w-lg mb-8 sm:mb-10">
+                <div className="inline-flex items-center gap-1.5 pill-brand px-3.5 py-1.5 rounded-full text-xs font-bold mb-3">
                   <ShieldCheck className="w-3.5 h-3.5" />
                   Admin Console Active
                 </div>
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">
-                  Incentive QR Management
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                  <span className="gradient-text">QR Management</span>
                 </h1>
-                <p className="mt-2 text-xs sm:text-sm text-gray-500 leading-relaxed">
+                <p className="mt-2 text-sm text-gray-500 leading-relaxed font-medium">
                   Generate batches of secure, single-use reward QR tokens and monitor real-time claims.
                 </p>
               </div>
-
               <div className="w-full print:p-0">
                 <AdminDashboard />
               </div>
             </motion.div>
           ) : clientUser ? (
-            /* Logged-In Client User Mobile Experience */
             <motion.div
               key="user-view"
               className="w-full flex flex-col items-center"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.2 }}
+              initial={{ opacity: 0, y: 16, filter: 'blur(4px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -16, filter: 'blur(4px)' }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
             >
               <UserDashboard
                 user={clientUser}
@@ -209,14 +220,13 @@ export default function App() {
               />
             </motion.div>
           ) : (
-            /* Universal Landing & Auth Screen (User Default + Admin Tab) */
             <motion.div
               key="auth-view"
               className="w-full flex flex-col items-center"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              transition={{ duration: 0.2 }}
+              initial={{ opacity: 0, y: 16, filter: 'blur(4px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -16, filter: 'blur(4px)' }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
             >
               <UnifiedAuthScreen
                 onUserLoginSuccess={handleUserLoginSuccess}
@@ -228,9 +238,12 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      {/* Footer */}
-      <footer className="print:hidden w-full bg-white border-t border-gray-100 py-4 px-4 text-center text-xs text-gray-400 font-mono">
-        <p>© 2026 QR Incentive Engine. Responsive Mobile & Web Ready.</p>
+      {/* ===== FOOTER ===== */}
+      <footer className="print:hidden w-full py-5 px-4 text-center">
+        <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-400 font-medium">
+          <Sparkles className="w-3 h-3" />
+          <span>© 2026 QR Rewards · Built for scale</span>
+        </div>
       </footer>
     </div>
   );

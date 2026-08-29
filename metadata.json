@@ -1,0 +1,6 @@
+{
+  "name": "QR Generation Module",
+  "description": "An administrative module to generate secure, mathematically unique QR codes for an incentive and claim tracking system.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

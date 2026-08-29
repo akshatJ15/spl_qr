@@ -87,20 +87,20 @@ export default function App() {
             fontWeight: 600,
             borderRadius: '14px',
             padding: '12px 16px',
-            boxShadow: '0 8px 24px oklch(0.3 0.02 270 / 0.12)',
+            boxShadow: '0 8px 24px rgba(108,61,209,0.25)',
           },
           success: {
             style: {
-              background: 'oklch(0.97 0.04 155)',
-              color: 'oklch(0.25 0.10 155)',
-              border: '1px solid oklch(0.90 0.06 155 / 0.5)',
+              background: 'rgba(108,61,209,0.25)',
+              color: 'rgba(108,61,209,0.25)',
+              border: '1px solid rgba(108,61,209,0.25)',
             },
           },
           error: {
             style: {
-              background: 'oklch(0.97 0.04 25)',
-              color: 'oklch(0.30 0.12 25)',
-              border: '1px solid oklch(0.90 0.06 25 / 0.5)',
+              background: 'rgba(108,61,209,0.25)',
+              color: 'rgba(108,61,209,0.25)',
+              border: '1px solid rgba(108,61,209,0.25)',
             },
           },
         }}
@@ -119,7 +119,7 @@ export default function App() {
             }}
             className="flex items-center gap-2.5 cursor-pointer select-none group"
           >
-            <div className="p-2 bg-gradient-to-br from-brand-500 to-brand-700 text-white rounded-xl shadow-sm transition-transform group-hover:scale-105" style={{ boxShadow: '0 4px 12px oklch(0.48 0.22 268 / 0.25)' }}>
+            <div className="p-2 bg-gradient-to-br from-violet-500 to-violet-700 text-white rounded-xl shadow-sm transition-transform group-hover:scale-105" style={{ boxShadow: '0 4px 12px rgba(108,61,209,0.25)' }}>
               <Gift className="w-5 h-5" />
             </div>
             <div>
@@ -146,7 +146,7 @@ export default function App() {
                   setRoute('app');
                   setCurrentToken('');
                 }}
-                className="pill-brand px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer hover:bg-brand-100 transition-colors"
+                className="pill-brand px-3 py-1.5 rounded-xl text-xs font-semibold cursor-pointer hover:bg-violet-100 transition-colors"
               >
                 Portal Home
               </button>

@@ -172,7 +172,7 @@ export default function UnifiedAuthScreen({
               </button>
 
               {/* Floating icon */}
-              <div className="float w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-white flex items-center justify-center shadow-lg mb-5" style={{ boxShadow: '0 8px 24px oklch(0.48 0.22 268 / 0.3)' }}>
+              <div className="float w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 text-white flex items-center justify-center shadow-lg mb-5" style={{ boxShadow: '0 8px 24px rgba(108,61,209,0.3)' }}>
                 <Smartphone className="w-8 h-8" />
               </div>
 
@@ -194,9 +194,9 @@ export default function UnifiedAuthScreen({
                   { icon: Star, label: 'Track Points' },
                   { icon: Sparkles, label: 'Auto Claim' },
                 ].map(({ icon: Icon, label }) => (
-                  <div key={label} className="flex flex-col items-center gap-1.5 py-2.5 px-2 bg-brand-50/60 rounded-xl border border-brand-100/50">
-                    <Icon className="w-4 h-4 text-brand-600" />
-                    <span className="text-[10px] font-semibold text-brand-700">{label}</span>
+                  <div key={label} className="flex flex-col items-center gap-1.5 py-2.5 px-2 bg-violet-50/60 rounded-xl border border-violet-100/50">
+                    <Icon className="w-4 h-4 text-violet-600" />
+                    <span className="text-[10px] font-semibold text-violet-700">{label}</span>
                   </div>
                 ))}
               </div>
@@ -229,7 +229,7 @@ export default function UnifiedAuthScreen({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <div className="inline-flex p-3.5 bg-gradient-to-br from-brand-500 to-brand-700 text-white rounded-2xl shadow-lg mb-4" style={{ boxShadow: '0 8px 24px oklch(0.48 0.22 268 / 0.3)' }}>
+        <div className="inline-flex p-3.5 bg-gradient-to-br from-violet-500 to-violet-700 text-white rounded-2xl shadow-lg mb-4" style={{ boxShadow: '0 8px 24px rgba(108,61,209,0.3)' }}>
           <Gift className="w-7 h-7" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
@@ -249,7 +249,7 @@ export default function UnifiedAuthScreen({
       >
         
         {/* Role Toggle */}
-        <div className="grid grid-cols-2 gap-1.5 bg-surface-100/80 p-1.5 rounded-2xl mb-7">
+        <div className="grid grid-cols-2 gap-1.5 bg-gray-100/80 p-1.5 rounded-2xl mb-7">
           {(['user', 'admin'] as const).map((r) => (
             <button
               key={r}
@@ -257,7 +257,7 @@ export default function UnifiedAuthScreen({
               onClick={() => setRole(r)}
               className={`relative flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
                 role === r
-                  ? 'bg-white text-brand-700 shadow-sm'
+                  ? 'bg-white text-violet-700 shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -287,7 +287,7 @@ export default function UnifiedAuthScreen({
                     onClick={() => setAuthMode(mode)}
                     className={`relative flex-1 pb-3 text-sm font-semibold transition-colors cursor-pointer ${
                       authMode === mode 
-                        ? 'text-brand-600' 
+                        ? 'text-violet-600' 
                         : 'text-gray-400 hover:text-gray-600'
                     }`}
                   >
@@ -295,7 +295,7 @@ export default function UnifiedAuthScreen({
                     {authMode === mode && (
                       <motion.div
                         layoutId="auth-tab-indicator"
-                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-500 rounded-full"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-500 rounded-full"
                         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                       />
                     )}

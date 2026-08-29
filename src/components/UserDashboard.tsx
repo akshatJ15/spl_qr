@@ -166,7 +166,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
         className="glass-card w-full rounded-2xl p-3.5 flex items-center justify-between gap-3"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-brand-500 to-brand-700 text-white rounded-xl flex items-center justify-center shadow-sm shrink-0" style={{ boxShadow: '0 4px 12px oklch(0.48 0.22 268 / 0.2)' }}>
+          <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-700 text-white rounded-xl flex items-center justify-center shadow-sm shrink-0" style={{ boxShadow: '0 4px 12px rgba(108,61,209,0.25)' }}>
             <Smartphone className="w-5 h-5" />
           </div>
           <div>
@@ -193,7 +193,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
         {/* User info row */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white font-bold text-lg shadow-sm" style={{ boxShadow: '0 4px 12px oklch(0.48 0.22 268 / 0.25)' }}>
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white font-bold text-lg shadow-sm" style={{ boxShadow: '0 4px 12px rgba(108,61,209,0.25)' }}>
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div>
@@ -219,7 +219,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
         {/* ===== BALANCE CARD ===== */}
         <div className="balance-card text-white rounded-2xl p-5 sm:p-6 flex items-center justify-between relative z-0">
           <div className="relative z-10">
-            <span className="text-[11px] uppercase font-semibold tracking-widest text-brand-300/80">Current Balance</span>
+            <span className="text-[11px] uppercase font-semibold tracking-widest text-violet-300/80">Current Balance</span>
             <div className="text-3xl sm:text-4xl font-extrabold tracking-tight mt-1 flex items-baseline gap-2">
               <motion.span
                 key={user.points}
@@ -229,14 +229,14 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
               >
                 {user.points}
               </motion.span>
-              <span className="text-xs font-bold text-brand-300/70 uppercase">Points</span>
+              <span className="text-xs font-bold text-violet-300/70 uppercase">Points</span>
             </div>
-            <p className="text-xs text-brand-200/50 mt-1.5 font-medium flex items-center gap-1">
+            <p className="text-xs text-violet-200/50 mt-1.5 font-medium flex items-center gap-1">
               <TrendingUp className="w-3 h-3" />
               ₹{user.points} redeemable value
             </p>
           </div>
-          <div className="relative z-10 p-3.5 bg-white/10 text-brand-200 rounded-2xl border border-white/10 backdrop-blur-sm">
+          <div className="relative z-10 p-3.5 bg-white/10 text-violet-200 rounded-2xl border border-white/10 backdrop-blur-sm">
             <Award className="w-8 h-8" />
           </div>
         </div>
@@ -247,7 +247,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="grid grid-cols-2 gap-1.5 bg-surface-100/80 p-1.5 rounded-2xl"
+        className="grid grid-cols-2 gap-1.5 bg-gray-100/80 p-1.5 rounded-2xl"
       >
         {([
           { id: 'scan' as const, icon: QrCode, label: 'Scan Token' },
@@ -258,7 +258,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
             onClick={() => setActiveTab(id)}
             className={`relative flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
               activeTab === id
-                ? 'bg-white text-brand-700 shadow-sm'
+                ? 'bg-white text-violet-700 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
@@ -281,8 +281,8 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
           >
             {/* Status Banners */}
             {claimStatus.type === 'loading' && (
-              <div className="glass-card rounded-2xl p-4 flex items-center gap-3 text-brand-800">
-                <div className="w-5 h-5 border-2 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
+              <div className="glass-card rounded-2xl p-4 flex items-center gap-3 text-violet-800">
+                <div className="w-5 h-5 border-2 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
                 <span className="text-xs font-semibold">{claimStatus.message}</span>
               </div>
             )}
@@ -292,7 +292,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 className="glass-card-elevated rounded-[24px] p-6 sm:p-7 flex flex-col items-center text-center gap-3 border-emerald-200/60"
-                style={{ background: 'oklch(0.97 0.04 155 / 0.85)', borderColor: 'oklch(0.85 0.08 155 / 0.4)' }}
+                style={{ background: 'rgba(108,61,209,0.25)', borderColor: 'rgba(108,61,209,0.25)' }}
               >
                 <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-inner">
                   <CheckCircle2 className="w-9 h-9" />
@@ -320,7 +320,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 className="glass-card-elevated rounded-[24px] p-6 sm:p-7 flex flex-col items-center text-center gap-3"
-                style={{ background: 'oklch(0.97 0.04 25 / 0.85)', borderColor: 'oklch(0.85 0.08 25 / 0.4)' }}
+                style={{ background: 'rgba(108,61,209,0.25)', borderColor: 'rgba(108,61,209,0.25)' }}
               >
                 <div className="w-16 h-16 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center">
                   <AlertCircle className="w-9 h-9" />
@@ -340,7 +340,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
 
             {/* ===== SCAN ACTION CARD ===== */}
             <div className="glass-card-elevated rounded-[28px] p-7 sm:p-9 flex flex-col items-center text-center">
-              <div className="float w-20 h-20 rounded-3xl bg-brand-50 text-brand-600 flex items-center justify-center mb-5 border border-brand-100/60" style={{ boxShadow: '0 4px 16px oklch(0.55 0.20 268 / 0.1) inset, 0 2px 8px oklch(0.55 0.20 268 / 0.06)' }}>
+              <div className="float w-20 h-20 rounded-3xl bg-violet-50 text-violet-600 flex items-center justify-center mb-5 border border-violet-100/60" style={{ boxShadow: '0 4px 16px rgba(108,61,209,0.25) inset, 0 2px 8px rgba(108,61,209,0.25)' }}>
                 <QrCode className="w-10 h-10" />
               </div>
 
@@ -378,7 +378,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
               <button
                 onClick={fetchHistory}
                 disabled={isLoadingHistory}
-                className="flex items-center gap-1 text-xs text-brand-600 hover:text-brand-800 font-semibold cursor-pointer p-1"
+                className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 font-semibold cursor-pointer p-1"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isLoadingHistory ? 'animate-spin' : ''}`} />
                 <span>Refresh</span>
@@ -387,17 +387,17 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
 
             {isLoadingHistory ? (
               <div className="glass-card-elevated rounded-[24px] p-8 flex flex-col items-center justify-center text-center gap-3">
-                <div className="w-8 h-8 border-3 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-8 h-8 border-3 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
                 <p className="text-xs text-gray-500 font-medium">Loading scan history...</p>
               </div>
             ) : historyError ? (
-              <div className="glass-card rounded-2xl p-4 text-xs text-rose-700 flex items-center gap-2 font-medium" style={{ background: 'oklch(0.97 0.04 25 / 0.7)' }}>
+              <div className="glass-card rounded-2xl p-4 text-xs text-rose-700 flex items-center gap-2 font-medium" style={{ background: 'rgba(108,61,209,0.25)' }}>
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{historyError}</span>
               </div>
             ) : history.length === 0 ? (
               <div className="glass-card-elevated rounded-[24px] p-8 flex flex-col items-center justify-center text-center gap-3">
-                <div className="p-3.5 bg-surface-100 text-gray-400 rounded-2xl">
+                <div className="p-3.5 bg-gray-100 text-gray-400 rounded-2xl">
                   <History className="w-8 h-8" />
                 </div>
                 <h4 className="font-extrabold text-gray-800 text-sm">No Scans Yet</h4>
@@ -406,7 +406,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
                 </p>
                 <button
                   onClick={() => setActiveTab('scan')}
-                  className="mt-2 pill-brand px-4 py-2 rounded-xl text-xs font-bold cursor-pointer hover:bg-brand-100 transition-colors"
+                  className="mt-2 pill-brand px-4 py-2 rounded-xl text-xs font-bold cursor-pointer hover:bg-violet-100 transition-colors"
                 >
                   Scan First QR Now
                 </button>

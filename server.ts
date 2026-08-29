@@ -27,10 +27,12 @@ async function startServer() {
   const allowedOrigins = [
     process.env.APP_URL,
     process.env.VITE_API_BASE_URL,
+    "https://spl-qr-rewards.onrender.com",
     "http://localhost:3000",
     "http://localhost:5173",
     "capacitor://localhost",
-    "http://localhost"
+    "http://localhost",
+    "https://localhost"
   ].filter(Boolean);
 
   app.use(cors({

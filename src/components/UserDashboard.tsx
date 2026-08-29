@@ -148,12 +148,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
   };
 
   const triggerApkDownload = () => {
-    const link = document.createElement('a');
-    link.href = '/download-apk';
-    link.download = 'QR-Incentive-Rewards.apk';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    window.location.href = '/download-apk';
   };
 
   return (

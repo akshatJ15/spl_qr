@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import jsQR from 'jsqr';
+import { Camera as CapacitorCamera } from '@capacitor/camera';
 import { Camera, X, Upload, AlertCircle, RefreshCw, Sparkles } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -84,6 +85,28 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess }: QrSca
     onScanSuccess(token);
   }, [isProcessing, onScanSuccess, stopCamera]);
 
+  const requestNativeCameraPermission = useCallback(async () => {
+    if (typeof window === 'undefined') return true;
+
+    const isNativeCapacitor =
+      window.location.protocol === 'capacitor:' ||
+      window.location.protocol === 'file:' ||
+      (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
+
+    if (!isNativeCapacitor) return true;
+
+    try {
+      const status = await CapacitorCamera.checkPermissions();
+      if (status.camera === 'granted') return true;
+
+      const request = await CapacitorCamera.requestPermissions({ permissions: ['camera'] });
+      return request.camera === 'granted';
+    } catch (error) {
+      console.warn('Native camera permission request failed:', error);
+      return false;
+    }
+  }, []);
+
   const scanFrame = useCallback(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -122,6 +145,13 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess }: QrSca
     stopCamera();
 
     try {
+      const nativePermissionGranted = await requestNativeCameraPermission();
+      if (!nativePermissionGranted) {
+        setHasCameraPermission(false);
+        setErrorMessage('Camera permission was denied on this device. Please allow access to scan the QR code.');
+        return;
+      }
+
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('Camera streaming is not supported on this browser or platform.');
       }
@@ -151,7 +181,7 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess }: QrSca
       const message = err instanceof Error ? err.message : 'Camera access denied or unavailable.';
       setErrorMessage(message);
     }
-  }, [scanFrame, stopCamera]);
+  }, [requestNativeCameraPermission, scanFrame, stopCamera]);
 
   useEffect(() => {
     if (isOpen) {

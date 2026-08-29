@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { apiUrl } from '../utils/api';
+import { apiUrl, getApiBaseUrl } from '../utils/api';
 import { 
   Sparkles, 
   Printer, 
@@ -24,7 +24,7 @@ export default function AdminDashboard() {
   const [quantity, setQuantity] = useState(1);
   const [generatedQrs, setGeneratedQrs] = useState([]); // Replaces the single generatedQrUrl string
   const [generatedPoints, setGeneratedPoints] = useState(10); // Standardized across generated batch
-  const [qrBaseUrl, setQrBaseUrl] = useState(window.location.origin); // Custom base URL for scanners
+  const [qrBaseUrl, setQrBaseUrl] = useState(getApiBaseUrl() || window.location.origin); // Custom base URL for scanners
   const [beneficiaries, setBeneficiaries] = useState([]);
   const [loading, setLoading] = useState(false);
   

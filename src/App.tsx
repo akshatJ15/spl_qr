@@ -76,7 +76,13 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col antialiased font-sans text-gray-900">
+    <div 
+      className="min-h-dvh flex flex-col antialiased font-sans text-gray-900"
+      style={{
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)'
+      }}
+    >
       <Toaster 
         position="top-center"
         toastOptions={{

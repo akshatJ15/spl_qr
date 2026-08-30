@@ -167,7 +167,7 @@ export default function UnifiedAuthScreen({
               </button>
 
               {/* Floating icon */}
-              <div className="float w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 text-white flex items-center justify-center shadow-lg mb-5" style={{ boxShadow: '0 8px 24px rgba(108,61,209,0.3)' }}>
+              <div className="float w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 text-white flex items-center justify-center shadow-lg mb-5" style={{ boxShadow: '0 8px 24px rgba(101,87,255,0.3)' }}>
                 <Smartphone className="w-8 h-8" />
               </div>
 
@@ -224,7 +224,7 @@ export default function UnifiedAuthScreen({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <div className="inline-flex p-3.5 bg-gradient-to-br from-violet-500 to-violet-700 text-white rounded-2xl shadow-lg mb-4" style={{ boxShadow: '0 8px 24px rgba(108,61,209,0.3)' }}>
+        <div className="inline-flex p-3.5 bg-gradient-to-br from-violet-500 to-violet-700 text-white rounded-2xl shadow-lg mb-4" style={{ boxShadow: '0 8px 24px rgba(101,87,255,0.3)' }}>
           <Gift className="w-7 h-7" />
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">

@@ -166,7 +166,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
         className="glass-card w-full rounded-2xl p-3.5 flex items-center justify-between gap-3"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-700 text-white rounded-xl flex items-center justify-center shadow-sm shrink-0" style={{ boxShadow: '0 4px 12px rgba(108,61,209,0.25)' }}>
+          <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-700 text-white rounded-xl flex items-center justify-center shadow-sm shrink-0" style={{ boxShadow: '0 4px 12px rgba(101,87,255,0.25)' }}>
             <Smartphone className="w-5 h-5" />
           </div>
           <div>
@@ -193,7 +193,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
         {/* User info row */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white font-bold text-lg shadow-sm" style={{ boxShadow: '0 4px 12px rgba(108,61,209,0.25)' }}>
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white font-bold text-lg shadow-sm" style={{ boxShadow: '0 4px 12px rgba(101,87,255,0.25)' }}>
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div>
@@ -292,7 +292,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 className="glass-card-elevated rounded-[24px] p-6 sm:p-7 flex flex-col items-center text-center gap-3 border-emerald-200/60"
-                style={{ background: 'rgba(108,61,209,0.25)', borderColor: 'rgba(108,61,209,0.25)' }}
+                style={{ background: 'rgba(101,87,255,0.25)', borderColor: 'rgba(101,87,255,0.25)' }}
               >
                 <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-inner">
                   <CheckCircle2 className="w-9 h-9" />
@@ -320,7 +320,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 className="glass-card-elevated rounded-[24px] p-6 sm:p-7 flex flex-col items-center text-center gap-3"
-                style={{ background: 'rgba(108,61,209,0.25)', borderColor: 'rgba(108,61,209,0.25)' }}
+                style={{ background: 'rgba(101,87,255,0.25)', borderColor: 'rgba(101,87,255,0.25)' }}
               >
                 <div className="w-16 h-16 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center">
                   <AlertCircle className="w-9 h-9" />
@@ -340,7 +340,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
 
             {/* ===== SCAN ACTION CARD ===== */}
             <div className="glass-card-elevated rounded-[28px] p-7 sm:p-9 flex flex-col items-center text-center">
-              <div className="float w-20 h-20 rounded-3xl bg-violet-50 text-violet-600 flex items-center justify-center mb-5 border border-violet-100/60" style={{ boxShadow: '0 4px 16px rgba(108,61,209,0.25) inset, 0 2px 8px rgba(108,61,209,0.25)' }}>
+              <div className="float w-20 h-20 rounded-3xl bg-violet-50 text-violet-600 flex items-center justify-center mb-5 border border-violet-100/60" style={{ boxShadow: '0 4px 16px rgba(101,87,255,0.25) inset, 0 2px 8px rgba(101,87,255,0.25)' }}>
                 <QrCode className="w-10 h-10" />
               </div>
 
@@ -391,7 +391,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
                 <p className="text-xs text-gray-500 font-medium">Loading scan history...</p>
               </div>
             ) : historyError ? (
-              <div className="glass-card rounded-2xl p-4 text-xs text-rose-700 flex items-center gap-2 font-medium" style={{ background: 'rgba(108,61,209,0.25)' }}>
+              <div className="glass-card rounded-2xl p-4 text-xs text-rose-700 flex items-center gap-2 font-medium" style={{ background: 'rgba(101,87,255,0.25)' }}>
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{historyError}</span>
               </div>

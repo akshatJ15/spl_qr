@@ -32,3 +32,31 @@ export const apiUrl = (path: string): string => {
   const base = getApiBaseUrl();
   return base ? `${base}${cleanPath}` : cleanPath;
 };
+
+/**
+ * A robust fetch wrapper that automatically aborts the request and throws a clean error
+ * if the network takes longer than the specified timeout (default 12 seconds).
+ */
+export const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeoutMs: number = 12000): Promise<Response> => {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(id);
+    return response;
+  } catch (error: any) {
+    clearTimeout(id);
+    if (error.name === 'AbortError') {
+      throw new Error('Network Timeout. Please check your internet connection and try again.');
+    }
+    // If it's a TypeError, it's usually a DNS or network drop
+    if (error instanceof TypeError) {
+      throw new Error('Network Error. Could not connect to the server.');
+    }
+    throw error;
+  }
+};

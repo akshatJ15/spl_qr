@@ -3,7 +3,8 @@ import AdminDashboard from './components/AdminDashboard';
 import ClientClaim from './components/ClientClaim';
 import UserDashboard from './components/UserDashboard';
 import UnifiedAuthScreen from './components/UnifiedAuthScreen';
-import { Gift, ShieldCheck, LogOut, Sparkles } from 'lucide-react';
+import { Gift, ShieldCheck, LogOut, Sparkles, WifiOff } from 'lucide-react';
+import { Network } from '@capacitor/network';
 import { motion, AnimatePresence } from 'motion/react';
 import { Toaster } from 'react-hot-toast';
 
@@ -17,6 +18,7 @@ interface UserProfile {
 export default function App() {
   const [route, setRoute] = useState<'app' | 'claim'>('app');
   const [currentToken, setCurrentToken] = useState('');
+  const [isOnline, setIsOnline] = useState(true);
 
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
     return sessionStorage.getItem('isAdminAuthenticated') === 'true';
@@ -45,7 +47,27 @@ export default function App() {
     };
     handleUrlChange();
     window.addEventListener('popstate', handleUrlChange);
-    return () => window.removeEventListener('popstate', handleUrlChange);
+    
+    // Check initial network status
+    const initNetwork = async () => {
+      try {
+        const status = await Network.getStatus();
+        setIsOnline(status.connected);
+      } catch (e) {
+        // Ignored, probably not running in Capacitor or supported browser
+      }
+    };
+    initNetwork();
+
+    // Listen for network changes
+    const networkListener = Network.addListener('networkStatusChange', status => {
+      setIsOnline(status.connected);
+    });
+
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+      networkListener.then(listener => listener.remove());
+    };
   }, []);
 
   const handleAdminLoginSuccess = () => {
@@ -112,6 +134,21 @@ export default function App() {
         }}
       />
       
+      {/* ===== OFFLINE BANNER ===== */}
+      <AnimatePresence>
+        {!isOnline && (
+          <motion.div
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            className="w-full bg-red-500 text-white text-xs sm:text-sm font-bold py-2 px-4 flex items-center justify-center gap-2 z-[60] shadow-md relative"
+          >
+            <WifiOff className="w-4 h-4" />
+            <span>No Internet Connection. The app requires an active connection.</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ===== HEADER ===== */}
       <header className="print:hidden header-bar w-full py-3.5 px-4 sm:px-6 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between">

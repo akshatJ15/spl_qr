@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import QrScannerModal from './QrScannerModal';
-import { apiUrl } from '../utils/api';
+import { apiUrl, fetchWithTimeout } from '../utils/api';
 
 interface UserProfile {
   _id: string;
@@ -64,7 +64,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
     setIsLoadingHistory(true);
     setHistoryError(null);
     try {
-      const response = await fetch(apiUrl('/api/client/history'), {
+      const response = await fetchWithTimeout(apiUrl('/api/client/history'), {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -88,7 +88,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
     const token = localStorage.getItem('clientToken');
     if (!token) return;
     try {
-      const response = await fetch(apiUrl('/api/client/profile'), {
+      const response = await fetchWithTimeout(apiUrl('/api/client/profile'), {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -112,7 +112,12 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
       return;
     }
     try {
-      const checkRes = await fetch(apiUrl(`/api/public/check-token/${scannedToken}`));
+      setClaimStatus({ type: 'loading', message: 'Verifying QR code integrity...' });
+      const checkRes = await fetchWithTimeout(apiUrl('/api/public/verify-token'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: scannedToken })
+      });
       const checkRaw = await checkRes.text();
       let checkData;
       try { checkData = JSON.parse(checkRaw); } catch { throw new Error('Server returned invalid response'); }
@@ -121,7 +126,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
         return;
       }
       setClaimStatus({ type: 'loading', message: `Active token verified (${checkData.points} pts)! Adding to balance...` });
-      const claimRes = await fetch(apiUrl('/api/client/claim-token'), {
+      const claimRes = await fetchWithTimeout(apiUrl('/api/client/claim-token'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${clientToken}` },
         body: JSON.stringify({ uid: scannedToken })

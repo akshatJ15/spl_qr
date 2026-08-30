@@ -10,6 +10,7 @@ import cors from "cors";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 import { createServer as createViteServer } from "vite";
 import adminRouter from "./routes/admin.js";
 import publicRouter from "./routes/public.js";
@@ -46,21 +47,36 @@ async function startServer() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
   }));
+  // Use Helmet for standard security headers
+  app.use(helmet({
+    crossOriginResourcePolicy: false // Allows APK downloads across origins if needed
+  }));
   app.use(express.json());
 
   // Set up rate limiting
   // Enable trust proxy so express-rate-limit correctly identifies the client IP behind Render's load balancer
   app.set("trust proxy", 1);
-  const apiLimiter = rateLimit({
+  
+  const clientLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
+    max: 100, // Limit each IP to 100 client requests per windowMs
     message: { success: false, error: 'Too many requests, please try again later.' },
     standardHeaders: true,
     legacyHeaders: false,
   });
+
+  const adminLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 1000, // Generous limit for admins performing bulk operations
+    message: { success: false, error: 'Too many admin operations, please slow down.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
   
-  // Apply rate limiting to all /api routes
-  app.use("/api/", apiLimiter);
+  // Apply rate limiting based on route path
+  app.use("/api/client", clientLimiter);
+  app.use("/api/public", clientLimiter);
+  app.use("/api/admin", adminLimiter);
 
   // Connect to MongoDB with strict logging
   const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
@@ -86,7 +102,11 @@ async function startServer() {
 
   logStatus("connecting");
 
-  mongoose.connect(mongoUri)
+  mongoose.connect(mongoUri, {
+    serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
+    socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+    maxPoolSize: 50, // Maintain up to 50 socket connections
+  })
     .then(() => {
       console.log("✅ MONGODB CONNECTED SUCCESSFULLY");
       logStatus("connected");

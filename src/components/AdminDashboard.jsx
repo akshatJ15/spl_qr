@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { apiUrl, getApiBaseUrl } from '../utils/api';
+import { apiUrl, getApiBaseUrl, fetchWithTimeout } from '../utils/api';
 import { 
   Sparkles, 
   Printer, 
@@ -58,7 +58,7 @@ export default function AdminDashboard() {
     setLedgerLoading(true);
     addLog('system', 'Refreshing beneficiary ledger from database...');
     try {
-      const response = await fetch(apiUrl('/api/admin/beneficiaries'), {
+      const response = await fetchWithTimeout(apiUrl('/api/admin/beneficiaries'), {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${getAdminAuthToken()}`
@@ -229,7 +229,7 @@ export default function AdminDashboard() {
       const payload = { phone };
       addLog('network', `POST /api/admin/reset-points - payload: ${JSON.stringify(payload)}`);
       
-      const response = await fetch(apiUrl('/api/admin/reset-points'), {
+      const response = await fetchWithTimeout(apiUrl('/api/admin/reset-points'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

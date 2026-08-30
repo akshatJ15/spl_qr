@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Lock, Smartphone, ShieldAlert, CheckCircle2 } from 'lucide-react';
 import { motion } from 'motion/react';
+import { apiUrl, fetchWithTimeout } from '../utils/api';
 
 interface AdminLoginProps {
   onLoginSuccess: () => void;
@@ -12,7 +13,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -25,7 +26,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
     }
 
     try {
-      const response = await fetch('/api/admin/login', {
+      const response = await fetchWithTimeout(apiUrl('/api/admin/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pin: formattedPass }),

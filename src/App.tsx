@@ -3,7 +3,7 @@ import AdminDashboard from './components/AdminDashboard';
 import ClientClaim from './components/ClientClaim';
 import UserDashboard from './components/UserDashboard';
 import UnifiedAuthScreen from './components/UnifiedAuthScreen';
-import { Gift, ShieldCheck, LogOut, Sparkles, WifiOff } from 'lucide-react';
+import { Gift, ShieldCheck, LogOut, Sparkles, WifiOff, Smartphone, CheckCircle2, AlertCircle, QrCode } from 'lucide-react';
 import { Network } from '@capacitor/network';
 import { motion, AnimatePresence } from 'motion/react';
 import { Toaster } from 'react-hot-toast';
@@ -115,20 +115,20 @@ export default function App() {
             fontWeight: 600,
             borderRadius: '14px',
             padding: '12px 16px',
-            boxShadow: '0 8px 24px rgba(101,87,255,0.25)',
+            boxShadow: '0 8px 24px rgba(64,69,203,0.25)',
           },
           success: {
             style: {
-              background: 'rgba(101,87,255,0.25)',
-              color: 'rgba(101,87,255,0.25)',
-              border: '1px solid rgba(101,87,255,0.25)',
+              background: 'rgba(64,69,203,0.25)',
+              color: 'rgba(64,69,203,0.25)',
+              border: '1px solid rgba(64,69,203,0.25)',
             },
           },
           error: {
             style: {
-              background: 'rgba(101,87,255,0.25)',
-              color: 'rgba(101,87,255,0.25)',
-              border: '1px solid rgba(101,87,255,0.25)',
+              background: 'rgba(64,69,203,0.25)',
+              color: 'rgba(64,69,203,0.25)',
+              border: '1px solid rgba(64,69,203,0.25)',
             },
           },
         }}
@@ -162,15 +162,15 @@ export default function App() {
             }}
             className="flex items-center gap-2.5 cursor-pointer select-none group"
           >
-            <div className="p-2 bg-gradient-to-br from-violet-500 to-violet-700 text-white rounded-xl shadow-sm transition-transform group-hover:scale-105" style={{ boxShadow: '0 4px 12px rgba(101,87,255,0.25)' }}>
-              <Gift className="w-5 h-5" />
+            <div className="p-2 bg-gradient-to-br from-violet-500 to-violet-700 text-white rounded-xl shadow-sm transition-transform group-hover:scale-105" style={{ boxShadow: '0 4px 12px rgba(64,69,203,0.25)' }}>
+              <span className="font-extrabold text-xl font-sans leading-none flex items-center justify-center w-5 h-5">M</span>
             </div>
             <div>
               <span className="font-bold text-base sm:text-lg tracking-tight text-gray-900 block leading-tight gradient-text">
-                QR Rewards
+                My Scan
               </span>
               <span className="text-[10px] text-gray-400 font-medium hidden sm:block leading-none mt-0.5">
-                Incentive Rewards Platform
+                Quick QR Scanner
               </span>
             </div>
           </div>

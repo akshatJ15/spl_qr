@@ -5,7 +5,6 @@ import {
   KeyRound, 
   ArrowRight, 
   Smartphone,
-  Gift,
   Download,
   X,
   Sparkles,
@@ -54,7 +53,12 @@ export default function UnifiedAuthScreen({
   };
 
   const triggerApkDownload = () => {
-    window.location.href = '/download-apk';
+    const link = document.createElement('a');
+    link.href = '/download-apk';
+    link.download = 'MyScan.apk';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
     closeApkModal();
   };
 
@@ -167,7 +171,7 @@ export default function UnifiedAuthScreen({
               </button>
 
               {/* Floating icon */}
-              <div className="float w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 text-white flex items-center justify-center shadow-lg mb-5" style={{ boxShadow: '0 8px 24px rgba(101,87,255,0.3)' }}>
+              <div className="float w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 text-white flex items-center justify-center shadow-lg mb-5" style={{ boxShadow: '0 8px 24px rgba(64,69,203,0.3)' }}>
                 <Smartphone className="w-8 h-8" />
               </div>
 
@@ -224,11 +228,11 @@ export default function UnifiedAuthScreen({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <div className="inline-flex p-3.5 bg-gradient-to-br from-violet-500 to-violet-700 text-white rounded-2xl shadow-lg mb-4" style={{ boxShadow: '0 8px 24px rgba(101,87,255,0.3)' }}>
-          <Gift className="w-7 h-7" />
+        <div className="inline-flex p-3.5 bg-gradient-to-br from-violet-500 to-violet-700 text-white rounded-2xl shadow-lg mb-4" style={{ boxShadow: '0 8px 24px rgba(64,69,203,0.3)' }}>
+          <span className="font-extrabold text-2xl font-sans leading-none flex items-center justify-center w-7 h-7">M</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-          <span className="gradient-text">QR Rewards</span>
+          <span className="gradient-text">My Scan</span>
         </h1>
         <p className="text-sm text-gray-500 mt-1.5 font-medium">
           Scan codes · Earn points · Redeem rewards

@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.spl.incentiveportal',
-  appName: 'SPL Incentive Portal',
+  appName: 'My Scan',
   webDir: 'dist',
   server: {
     androidScheme: 'https',

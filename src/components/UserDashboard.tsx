@@ -115,10 +115,9 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
     }
     try {
       setClaimStatus({ type: 'loading', message: 'Verifying QR code integrity...' });
-      const checkRes = await fetchWithTimeout(apiUrl('/api/public/verify-token'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ uid: scannedToken })
+      const checkRes = await fetchWithTimeout(apiUrl(`/api/public/check-token/${scannedToken}`), {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
       });
       const checkRaw = await checkRes.text();
       let checkData;

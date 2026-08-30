@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Sparkles, Printer, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
+import { Sparkles, Printer, RefreshCw, AlertCircle, CheckCircle, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { apiUrl } from '../utils/api';
 
@@ -121,15 +121,15 @@ export default function AdminGenerator() {
           <Sparkles className="w-5 h-5" />
         </div>
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 tracking-tight">QR Incentive Generator</h2>
-          <p className="text-xs text-gray-500 font-mono mt-0.5">Admin Control Panel</p>
+          <h2 className="text-xl font-semibold text-brand-charcoal tracking-tight">QR Incentive Generator</h2>
+          <p className="text-xs text-brand-charcoal font-mono mt-0.5">Admin Control Panel</p>
         </div>
       </div>
 
       {/* Configuration Form */}
       <form onSubmit={handleGenerate} className="space-y-5">
         <div>
-          <label htmlFor="points-input" className="block text-sm font-medium text-gray-700 mb-1.5">
+          <label htmlFor="points-input" className="block text-sm font-medium text-brand-charcoal mb-1.5">
             Points to Award
           </label>
           <div className="relative">
@@ -140,7 +140,7 @@ export default function AdminGenerator() {
               value={points}
               onChange={(e) => setPoints(Math.max(1, parseInt(e.target.value) || 0))}
               disabled={loading}
-              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium text-gray-900"
+              className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium text-brand-charcoal"
               placeholder="e.g. 10"
             />
             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-medium">
@@ -196,27 +196,54 @@ export default function AdminGenerator() {
             </div>
 
             {/* Printable Container */}
-            <div id="printable-qr-area" className="flex flex-col items-center">
-              <div className="no-print-border p-4 bg-white border border-gray-100 rounded-xl shadow-xs flex flex-col items-center">
-                <QRCodeSVG
-                  value={`${window.location.origin}/claim?token=${generatedData.token}`}
-                  size={180}
-                  level="H"
-                  includeMargin={true}
-                  className="mx-auto"
-                />
+            <div id="printable-qr-area" className="flex flex-col items-center mt-2">
+              <div className="no-print-border w-[260px] bg-white rounded-[24px] shadow-sm flex flex-col overflow-hidden relative" style={{ border: '2px dashed #CBD5E1' }}>
                 
-                <div className="mt-3 text-center">
-                  <span className="inline-block px-3 py-1 bg-yellow-50 text-yellow-700 border border-yellow-100 rounded-full text-xs font-bold font-mono">
-                    {generatedData.points} POINTS
-                  </span>
-                  <p className="text-[10px] text-gray-400 font-mono mt-1.5 max-w-[200px] truncate">
-                    UUID: {generatedData.token}
-                  </p>
-                  <p className="hidden print:block text-xs text-gray-500 font-medium mt-1">
-                    Scan to Claim Points
-                  </p>
+                {/* Header */}
+                <div className="w-full bg-[#4045CB] text-white py-3 flex items-center justify-center gap-1.5">
+                  <Star className="w-4 h-4 text-yellow-300 fill-yellow-300" />
+                  <span className="font-black tracking-widest text-sm uppercase">My Scan Rewards</span>
+                  <Star className="w-4 h-4 text-yellow-300 fill-yellow-300" />
                 </div>
+
+                {/* QR Body */}
+                <div className="p-5 flex flex-col items-center bg-white">
+                  <div className="p-1 border border-gray-100 rounded-2xl shadow-sm mb-4">
+                    <QRCodeSVG
+                      value={`${window.location.origin}/claim?token=${generatedData.token}`}
+                      size={160}
+                      level="H"
+                      includeMargin={false}
+                      imageSettings={{
+                        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%234045CB'/%3E%3Ctext x='50' y='70' font-family='sans-serif' font-size='60' font-weight='900' fill='white' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E",
+                        height: 40,
+                        width: 40,
+                        excavate: true,
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="text-center w-full">
+                    <div className="text-[#FB734E] font-black text-2xl uppercase tracking-tight leading-none mb-1">
+                      GET {generatedData.points} POINTS!
+                    </div>
+                    
+                    <p className="text-[#1D1E6B] font-bold text-[11px] tracking-widest uppercase mt-3 mb-4">
+                      Scan To Claim
+                    </p>
+                  </div>
+                </div>
+
+                {/* Footer (Lot / ID) */}
+                <div className="w-full bg-gray-50 py-2 px-4 flex items-center justify-between border-t border-dashed border-gray-200">
+                  <span className="text-[10px] font-black text-brand-charcoal font-mono">
+                    LOT {String(generatedData.lotNumber || 0).padStart(3, '0')}
+                  </span>
+                  <span className="text-[8px] text-gray-400 font-mono">
+                    ID:{generatedData.token.substring(0, 8)}
+                  </span>
+                </div>
+
               </div>
             </div>
 
@@ -236,7 +263,7 @@ export default function AdminGenerator() {
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-gray-400 font-mono">Localhost Reference (Core Config)</p>
-                  <code className="text-[11px] text-gray-500 select-all break-all block mt-0.5 font-mono">
+                  <code className="text-[11px] text-brand-charcoal select-all break-all block mt-0.5 font-mono">
                     {generatedData.url}
                   </code>
                 </div>
@@ -268,7 +295,7 @@ export default function AdminGenerator() {
               <button
                 id="print-btn"
                 onClick={handlePrint}
-                className="w-full py-2.5 bg-gray-950 hover:bg-gray-900 text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer text-sm"
+                className="w-full py-2.5 bg-gray-950 hover:bg-brand-charcoal text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer text-sm"
               >
                 <Printer className="w-4 h-4" />
                 Print QR Code

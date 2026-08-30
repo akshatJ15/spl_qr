@@ -1,7 +1,8 @@
 import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
-import QrToken from '../models/QrToken.js';
+import { QrToken } from '../models/QrToken.js';
+import Counter from '../models/Counter.js';
 
 const router = express.Router();
 const getJwtSecret = () => process.env.JWT_SECRET || 'QR_INCENTIVE_DEFAULT_SECRET';
@@ -75,9 +76,24 @@ router.post('/generate-qr', requireAdminAuth, async (req, res) => {
     // Generate unique UUIDv4 token
     const uniqueToken = uuidv4();
 
+    let nextLotNumber = 0;
+    
+    // Increment the sequence atomically in the database if MongoDB is active
+    try {
+      const counter = await Counter.findOneAndUpdate(
+        { id: 'qr_lot_no' },
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
+      );
+      nextLotNumber = counter.seq;
+    } catch (e) {
+      console.warn("MongoDB sequence increment failed, falling back to 0", e);
+    }
+
     // Save a new QrToken to the database
     const newToken = await QrToken.create({
       uid: uniqueToken,
+      lotNumber: nextLotNumber,
       points: Number(points),
       used: false,
       claimedBy: null,
@@ -101,7 +117,8 @@ router.post('/generate-qr', requireAdminAuth, async (req, res) => {
       success: true,
       message: 'QR Token generated successfully.',
       token: uniqueToken,
-      points: newToken.points,
+      lotNumber: nextLotNumber,
+      points: Number(points),
       // Provide the requested literal URL format in the success response
       url: localClaimUrl,
       // Provide a preview URL for debugging inside the live dev sandbox
@@ -158,13 +175,32 @@ router.post('/bulk-generate-qr', requireAdminAuth, async (req, res) => {
     console.log(`[BACKEND BULK-GENERATE] Valid inputs acknowledged: Points: ${points}, Qty: ${qty}`);
 
     const newTokens = [];
-    const uidsArray = [];
+    const tokensArray = [];
+    
+    let startLot = 0;
+    try {
+      const counter = await Counter.findOneAndUpdate(
+        { id: 'qr_lot_no' },
+        { $inc: { seq: qty } },
+        { new: true, upsert: true }
+      );
+      startLot = counter.seq - qty;
+    } catch (e) {
+      console.warn("MongoDB sequence increment failed", e);
+    }
 
     for (let i = 0; i < qty; i++) {
       const generatedUuid = uuidv4();
-      uidsArray.push(generatedUuid);
+      const lotNum = startLot + i + 1;
+      
+      tokensArray.push({
+        uid: generatedUuid,
+        lotNumber: lotNum
+      });
+      
       newTokens.push({
         uid: generatedUuid,
+        lotNumber: lotNum,
         points: Number(points),
         used: false,
         claimedBy: null,
@@ -178,7 +214,7 @@ router.post('/bulk-generate-qr', requireAdminAuth, async (req, res) => {
     console.log(`[BACKEND BULK-GENERATE] SUCCESS: Sending array response with ${qty} elements back to client.`);
     console.log(`======================================================\n`);
 
-    return res.status(200).json(uidsArray);
+    return res.status(200).json(tokensArray);
 
   } catch (error) {
     console.error('[BACKEND BULK-GENERATE] FATAL EXCEPTION:', error);

@@ -7,6 +7,10 @@ const QrTokenSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  lotNumber: {
+    type: Number,
+    required: true
+  },
   points: {
     type: Number,
     required: true
@@ -48,6 +52,7 @@ export const QrToken = {
     } else {
       const record = {
         uid: data.uid,
+        lotNumber: data.lotNumber || 0,
         points: Number(data.points),
         used: data.used ?? false,
         claimedBy: data.claimedBy ?? null,

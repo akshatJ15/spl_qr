@@ -73,7 +73,7 @@ export default function ClientLogin({ onLoginSuccess }) {
         <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl mb-3 border border-blue-100/40">
           <Smartphone className="w-6 h-6 animate-pulse" />
         </div>
-        <h3 className="text-xl font-bold text-gray-900 tracking-tight text-center">Mobile Authentication</h3>
+        <h3 className="text-xl font-bold text-brand-charcoal tracking-tight text-center">Mobile Authentication</h3>
         <p className="text-xs text-gray-400 mt-1 text-center leading-relaxed">
           Unlock your reward points instantly. No passwords required.
         </p>
@@ -82,7 +82,7 @@ export default function ClientLogin({ onLoginSuccess }) {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Mobile Input */}
         <div>
-          <label htmlFor="phone-input" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+          <label htmlFor="phone-input" className="block text-xs font-semibold text-brand-charcoal uppercase tracking-wider mb-1.5">
             Mobile Number
           </label>
           <div className="relative">
@@ -96,7 +96,7 @@ export default function ClientLogin({ onLoginSuccess }) {
               disabled={loading}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-gray-50/80 border border-gray-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium text-gray-800 text-sm"
+              className="w-full pl-10 pr-4 py-3 bg-gray-50/80 border border-gray-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium text-brand-charcoal text-sm"
               placeholder="+91 XXXXX XXXXX"
             />
           </div>
@@ -104,7 +104,7 @@ export default function ClientLogin({ onLoginSuccess }) {
 
         {/* Full Name Input */}
         <div>
-          <label htmlFor="name-input" className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+          <label htmlFor="name-input" className="block text-xs font-semibold text-brand-charcoal uppercase tracking-wider mb-1.5">
             Full Name
           </label>
           <div className="relative">
@@ -118,7 +118,7 @@ export default function ClientLogin({ onLoginSuccess }) {
               disabled={loading}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-gray-50/80 border border-gray-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium text-gray-800 text-sm"
+              className="w-full pl-10 pr-4 py-3 bg-gray-50/80 border border-gray-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium text-brand-charcoal text-sm"
               placeholder="e.g. Rahul Sharma"
             />
           </div>

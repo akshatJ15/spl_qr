@@ -193,7 +193,7 @@ export default function ClientClaim() {
           <span className="inline-block px-3 py-1 bg-amber-50 border border-amber-200/60 text-amber-800 rounded-full text-[10px] font-extrabold tracking-wider uppercase mb-1.5">
             AUTHENTICATION REQUIRED
           </span>
-          <h2 className="text-sm sm:text-base font-bold text-gray-800">
+          <h2 className="text-sm sm:text-base font-bold text-brand-charcoal">
             We verified <span className="text-blue-600 font-extrabold">{pointsAvailable || 10} points</span> waiting!
           </h2>
         </div>
@@ -215,7 +215,7 @@ export default function ClientClaim() {
               <Loader2 className="w-7 h-7 animate-spin" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-gray-900">Verifying secure token...</h3>
+              <h3 className="text-sm font-bold text-brand-charcoal">Verifying secure token...</h3>
               <p className="text-xs text-gray-400 mt-1">Connecting to rewards system.</p>
             </div>
           </motion.div>
@@ -234,14 +234,14 @@ export default function ClientClaim() {
               <XCircle className="w-8 h-8" />
             </div>
             <div className="bg-red-50 border border-red-100 rounded-2xl p-4 w-full">
-              <h3 className="text-sm font-bold text-gray-900">QR Code Inactive / Already Claimed</h3>
+              <h3 className="text-sm font-bold text-brand-charcoal">QR Code Inactive / Already Claimed</h3>
               <p className="text-xs text-red-600 mt-1 font-medium">
                 {errorMsg || 'This QR token has already been claimed or is invalid.'}
               </p>
             </div>
             <button
               onClick={() => window.location.reload()}
-              className="mt-4 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-gray-700 font-semibold rounded-xl text-xs transition-colors cursor-pointer"
+              className="mt-4 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-brand-charcoal font-semibold rounded-xl text-xs transition-colors cursor-pointer"
             >
               Try Again
             </button>
@@ -279,7 +279,7 @@ export default function ClientClaim() {
             </div>
 
             <div className="bg-blue-50/60 border border-blue-100 rounded-2xl p-4 w-full shadow-xs">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-brand-charcoal uppercase tracking-wider">
                 Points Available
               </span>
               <div className="text-4xl font-extrabold text-blue-900 tracking-tight mt-1">
@@ -294,8 +294,8 @@ export default function ClientClaim() {
                     {userProfile.name?.charAt(0)?.toUpperCase() || 'U'}
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-gray-800 block leading-tight">{userProfile.name}</span>
-                    <span className="text-[10px] text-gray-500">{userProfile.phone}</span>
+                    <span className="text-xs font-bold text-brand-charcoal block leading-tight">{userProfile.name}</span>
+                    <span className="text-[10px] text-brand-charcoal">{userProfile.phone}</span>
                   </div>
                 </div>
                 <button 
@@ -338,20 +338,20 @@ export default function ClientClaim() {
             exit={{ opacity: 0, scale: 0.95 }}
             className="w-full bg-white border border-gray-100 rounded-3xl shadow-sm p-6 sm:p-7 flex flex-col items-center justify-center text-center"
           >
-            <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center shadow-xs border-4 border-emerald-100 mb-3">
+            <div className="w-16 h-16 bg-brand-blue-50 text-brand-blue rounded-full flex items-center justify-center shadow-xs border-4 border-brand-blue-50 mb-3">
               <CheckCircle className="w-9 h-9" />
             </div>
 
-            <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-5 w-full shadow-xs">
-              <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold uppercase tracking-wider">
+            <div className="bg-brand-blue-50 border border-brand-blue-50 rounded-2xl p-5 w-full shadow-xs">
+              <span className="inline-block px-3 py-1 bg-brand-blue-50 text-brand-blue rounded-full text-xs font-bold uppercase tracking-wider">
                 Points Claimed Successfully
               </span>
-              <p className="text-sm font-bold text-gray-800 mt-3">
+              <p className="text-sm font-bold text-brand-charcoal mt-3">
                 <strong>+{pointsAvailable}</strong> points added to your balance.
               </p>
-              <div className="mt-3 border-t border-emerald-200/60 pt-2 flex justify-between items-center text-xs font-medium text-gray-600">
+              <div className="mt-3 border-t border-brand-blue-50/60 pt-2 flex justify-between items-center text-xs font-medium text-brand-charcoal">
                 <span>New Balance:</span>
-                <span className="font-bold text-emerald-700">{userProfile?.points ?? pointsAvailable} pts</span>
+                <span className="font-bold text-brand-blue">{userProfile?.points ?? pointsAvailable} pts</span>
               </div>
             </div>
           </motion.div>

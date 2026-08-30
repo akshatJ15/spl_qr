@@ -35,6 +35,8 @@ interface ScanHistoryItem {
   claimedAt: string;
   claimedBy: string;
   used: boolean;
+  lotNumber?: number;
+  zeroedOut?: boolean;
 }
 
 interface UserDashboardProps {
@@ -171,12 +173,12 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
         className="glass-card w-full rounded-2xl p-3.5 flex items-center justify-between gap-3"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-violet-700 text-white rounded-xl flex items-center justify-center shadow-sm shrink-0" style={{ boxShadow: '0 4px 12px rgba(64,69,203,0.25)' }}>
+          <div className="w-10 h-10 bg-gradient-to-br from-brand-blue to-brand-blue text-white rounded-xl flex items-center justify-center shadow-sm shrink-0" style={{ boxShadow: '0 4px 12px rgba(23, 131, 193,0.25)' }}>
             <Smartphone className="w-5 h-5" />
           </div>
           <div>
-            <h4 className="text-xs font-bold text-gray-900 leading-tight">Get Android App</h4>
-            <p className="text-[11px] text-gray-500 mt-0.5">1-tap scanning & instant rewards</p>
+            <h4 className="text-xs font-bold text-brand-charcoal leading-tight">Get Android App</h4>
+            <p className="text-[11px] text-brand-charcoal mt-0.5">1-tap scanning & instant rewards</p>
           </div>
         </div>
         <button
@@ -198,14 +200,14 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
         {/* User info row */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white font-bold text-lg shadow-sm" style={{ boxShadow: '0 4px 12px rgba(64,69,203,0.25)' }}>
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-blue to-brand-blue flex items-center justify-center text-white font-bold text-lg shadow-sm" style={{ boxShadow: '0 4px 12px rgba(23, 131, 193,0.25)' }}>
               {user.name.charAt(0).toUpperCase()}
             </div>
             <div>
-              <h2 className="text-lg sm:text-xl font-extrabold text-gray-900 leading-tight tracking-tight">
+              <h2 className="text-lg sm:text-xl font-extrabold text-brand-charcoal leading-tight tracking-tight">
                 {user.name}
               </h2>
-              <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5 font-medium">
+              <p className="text-xs text-brand-charcoal flex items-center gap-1 mt-0.5 font-medium">
                 <Phone className="w-3 h-3 text-gray-400" />
                 {user.phone}
               </p>
@@ -213,7 +215,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
           </div>
           <button
             onClick={onLogout}
-            className="p-2.5 sm:px-3.5 sm:py-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all border border-gray-100/80 flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
+            className="p-2.5 sm:px-3.5 sm:py-2 text-gray-400 hover:text-brand-blue hover:bg-brand-blue-50 rounded-xl transition-all border border-gray-100/80 flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
             title="Sign Out"
           >
             <LogOut className="w-4 h-4" />
@@ -224,7 +226,7 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
         {/* ===== BALANCE CARD ===== */}
         <div className="balance-card text-white rounded-2xl p-5 sm:p-6 flex items-center justify-between relative z-0">
           <div className="relative z-10">
-            <span className="text-[11px] uppercase font-semibold tracking-widest text-violet-300/80">Current Balance</span>
+            <span className="text-[11px] uppercase font-semibold tracking-widest text-brand-blue-50/80">Current Balance</span>
             <div className="text-3xl sm:text-4xl font-extrabold tracking-tight mt-1 flex items-baseline gap-2">
               <motion.span
                 key={user.points}
@@ -234,14 +236,14 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
               >
                 {user.points}
               </motion.span>
-              <span className="text-xs font-bold text-violet-300/70 uppercase">Points</span>
+              <span className="text-xs font-bold text-brand-blue-50/70 uppercase">Points</span>
             </div>
-            <p className="text-xs text-violet-200/50 mt-1.5 font-medium flex items-center gap-1">
+            <p className="text-xs text-brand-blue-50/50 mt-1.5 font-medium flex items-center gap-1">
               <TrendingUp className="w-3 h-3" />
               ₹{user.points} redeemable value
             </p>
           </div>
-          <div className="relative z-10 p-3.5 bg-white/10 text-violet-200 rounded-2xl border border-white/10 backdrop-blur-sm">
+          <div className="relative z-10 p-3.5 bg-white/10 text-brand-blue-50 rounded-2xl border border-white/10 backdrop-blur-sm">
             <Award className="w-8 h-8" />
           </div>
         </div>
@@ -263,8 +265,8 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
             onClick={() => setActiveTab(id)}
             className={`relative flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
               activeTab === id
-                ? 'bg-white text-violet-700 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-white text-brand-blue shadow-sm'
+                : 'text-brand-charcoal hover:text-brand-charcoal'
             }`}
           >
             <Icon className="w-4 h-4" />
@@ -286,8 +288,8 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
           >
             {/* Status Banners */}
             {claimStatus.type === 'loading' && (
-              <div className="glass-card rounded-2xl p-4 flex items-center gap-3 text-violet-800">
-                <div className="w-5 h-5 border-2 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+              <div className="glass-card rounded-2xl p-4 flex items-center gap-3 text-brand-navy">
+                <div className="w-5 h-5 border-2 border-brand-blue border-t-transparent rounded-full animate-spin"></div>
                 <span className="text-xs font-semibold">{claimStatus.message}</span>
               </div>
             )}
@@ -296,24 +298,24 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
               <motion.div
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                className="glass-card-elevated rounded-[24px] p-6 sm:p-7 flex flex-col items-center text-center gap-3 border-emerald-200/60"
-                style={{ background: 'rgba(64,69,203,0.25)', borderColor: 'rgba(64,69,203,0.25)' }}
+                className="glass-card-elevated rounded-[24px] p-6 sm:p-7 flex flex-col items-center text-center gap-3 border-brand-blue-50/60"
+                style={{ background: 'rgba(23, 131, 193,0.25)', borderColor: 'rgba(23, 131, 193,0.25)' }}
               >
-                <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-inner">
+                <div className="w-16 h-16 rounded-full bg-brand-blue-50 text-brand-blue flex items-center justify-center shadow-inner">
                   <CheckCircle2 className="w-9 h-9" />
                 </div>
                 <div>
                   <h3 className="text-xl font-extrabold text-emerald-900">+{claimStatus.pointsAdded} Points!</h3>
-                  <p className="text-xs text-emerald-700 mt-1 max-w-sm font-medium">{claimStatus.message}</p>
+                  <p className="text-xs text-brand-blue mt-1 max-w-sm font-medium">{claimStatus.message}</p>
                   {claimStatus.tokenUid && (
-                    <span className="inline-block mt-2 font-mono text-[10px] bg-emerald-100/80 px-2 py-0.5 rounded-lg text-emerald-800">
+                    <span className="inline-block mt-2 font-mono text-[10px] bg-brand-blue-50/80 px-2 py-0.5 rounded-lg text-brand-blue">
                       {claimStatus.tokenUid.slice(0, 12)}...
                     </span>
                   )}
                 </div>
                 <button
                   onClick={() => setClaimStatus({ type: 'idle' })}
-                  className="mt-1 px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors"
+                  className="mt-1 px-5 py-2 bg-brand-blue hover:bg-brand-blue text-white rounded-xl text-xs font-bold cursor-pointer active:scale-95 transition-all"
                 >
                   Dismiss
                 </button>
@@ -325,18 +327,18 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
                 initial={{ scale: 0.95, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 className="glass-card-elevated rounded-[24px] p-6 sm:p-7 flex flex-col items-center text-center gap-3"
-                style={{ background: 'rgba(64,69,203,0.25)', borderColor: 'rgba(64,69,203,0.25)' }}
+                style={{ background: 'rgba(23, 131, 193,0.25)', borderColor: 'rgba(23, 131, 193,0.25)' }}
               >
-                <div className="w-16 h-16 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-brand-blue-50 text-brand-blue flex items-center justify-center">
                   <AlertCircle className="w-9 h-9" />
                 </div>
                 <div>
                   <h3 className="text-base font-extrabold text-rose-900">QR Code Invalid</h3>
-                  <p className="text-xs text-rose-700 mt-1 max-w-sm font-medium">{claimStatus.message}</p>
+                  <p className="text-xs text-brand-blue mt-1 max-w-sm font-medium">{claimStatus.message}</p>
                 </div>
                 <button
                   onClick={() => setClaimStatus({ type: 'idle' })}
-                  className="mt-1 px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors"
+                  className="mt-1 px-5 py-2 bg-brand-blue hover:bg-brand-blue text-white rounded-xl text-xs font-bold cursor-pointer active:scale-95 transition-all"
                 >
                   Try Another QR
                 </button>
@@ -345,12 +347,12 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
 
             {/* ===== SCAN ACTION CARD ===== */}
             <div className="glass-card-elevated rounded-[28px] p-7 sm:p-9 flex flex-col items-center text-center">
-              <div className="float w-20 h-20 rounded-3xl bg-violet-50 text-violet-600 flex items-center justify-center mb-5 border border-violet-100/60" style={{ boxShadow: '0 4px 16px rgba(64,69,203,0.25) inset, 0 2px 8px rgba(64,69,203,0.25)' }}>
+              <div className="float w-20 h-20 rounded-3xl bg-brand-blue-50 text-brand-blue flex items-center justify-center mb-5 border border-brand-blue-50/60" style={{ boxShadow: '0 4px 16px rgba(23, 131, 193,0.25) inset, 0 2px 8px rgba(23, 131, 193,0.25)' }}>
                 <QrCode className="w-10 h-10" />
               </div>
 
-              <h3 className="text-xl font-extrabold text-gray-900 tracking-tight">Scan Incentive Token</h3>
-              <p className="text-sm text-gray-500 mt-2 max-w-xs leading-relaxed font-medium">
+              <h3 className="text-xl font-extrabold text-brand-charcoal tracking-tight">Scan Incentive Token</h3>
+              <p className="text-sm text-brand-charcoal mt-2 max-w-xs leading-relaxed font-medium">
                 Point your camera at the QR code on the package to claim your reward points instantly.
               </p>
 
@@ -376,14 +378,14 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
             className="flex flex-col gap-3"
           >
             <div className="flex items-center justify-between px-1">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="text-xs font-bold text-brand-charcoal uppercase tracking-wider flex items-center gap-1.5">
                 <Coins className="w-3.5 h-3.5" />
                 Claimed Records ({history.length})
               </span>
               <button
                 onClick={fetchHistory}
                 disabled={isLoadingHistory}
-                className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-800 font-semibold cursor-pointer p-1"
+                className="flex items-center gap-1 text-xs text-brand-blue hover:text-brand-navy font-semibold cursor-pointer p-1"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isLoadingHistory ? 'animate-spin' : ''}`} />
                 <span>Refresh</span>
@@ -392,11 +394,11 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
 
             {isLoadingHistory ? (
               <div className="glass-card-elevated rounded-[24px] p-8 flex flex-col items-center justify-center text-center gap-3">
-                <div className="w-8 h-8 border-3 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-xs text-gray-500 font-medium">Loading scan history...</p>
+                <div className="w-8 h-8 border-3 border-brand-blue border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-xs text-brand-charcoal font-medium">Loading scan history...</p>
               </div>
             ) : historyError ? (
-              <div className="glass-card rounded-2xl p-4 text-xs text-rose-700 flex items-center gap-2 font-medium" style={{ background: 'rgba(64,69,203,0.25)' }}>
+              <div className="glass-card rounded-2xl p-4 text-xs text-brand-blue flex items-center gap-2 font-medium" style={{ background: 'rgba(23, 131, 193,0.25)' }}>
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{historyError}</span>
               </div>
@@ -405,57 +407,66 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
                 <div className="p-3.5 bg-gray-100 text-gray-400 rounded-2xl">
                   <History className="w-8 h-8" />
                 </div>
-                <h4 className="font-extrabold text-gray-800 text-sm">No Scans Yet</h4>
-                <p className="text-xs text-gray-500 max-w-xs font-medium">
+                <h4 className="font-extrabold text-brand-charcoal text-sm">No Scans Yet</h4>
+                <p className="text-xs text-brand-charcoal max-w-xs font-medium">
                   Scan an active QR code to see your reward history here.
                 </p>
                 <button
                   onClick={() => setActiveTab('scan')}
-                  className="mt-2 pill-brand px-4 py-2 rounded-xl text-xs font-bold cursor-pointer hover:bg-violet-100 transition-colors"
+                  className="mt-2 pill-brand px-4 py-2 rounded-xl text-xs font-bold cursor-pointer active:scale-95 transition-all"
                 >
                   Scan First QR Now
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col gap-2.5">
-                {history.map((item, idx) => (
-                  <motion.div
-                    key={item.uid || idx}
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="glass-card rounded-2xl p-4 flex items-center justify-between hover:shadow-md transition-all"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-extrabold text-sm border border-emerald-100/60">
-                        +{item.points}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs font-bold text-gray-800">
-                            {item.uid ? `${item.uid.slice(0, 8)}...` : 'QR TOKEN'}
-                          </span>
-                          <span className="pill-success text-[10px] font-bold px-2 py-0.5 rounded-full">
-                            Claimed
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[11px] text-gray-400 mt-1 font-medium">
-                          <Clock className="w-3 h-3" />
-                          <span>
+              <div className="glass-card-elevated rounded-[24px] overflow-hidden bg-white border border-gray-100 shadow-sm mt-2">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-gray-100 text-brand-charcoal text-xs font-semibold uppercase tracking-wider bg-gray-50/50">
+                        <th className="py-4 px-6">QR Token</th>
+                        <th className="py-4 px-6">Lot No.</th>
+                        <th className="py-4 px-6">Date Scanned</th>
+                        <th className="py-4 px-6 text-right">Points</th>
+                        <th className="py-4 px-6 text-right">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {history.map((item, idx) => (
+                        <tr key={item.uid || idx} className={`transition-colors text-sm ${item.zeroedOut ? 'bg-red-50/30 hover:bg-red-50/50' : 'hover:bg-gray-50'}`}>
+                          <td className="py-4 px-6 font-mono text-brand-charcoal font-medium">
+                            {item.uid ? item.uid.slice(0, 8) + '...' : 'UNKNOWN'}
+                          </td>
+                          <td className="py-4 px-6 font-mono text-brand-charcoal font-bold text-xs">
+                            {String(item.lotNumber || 0).padStart(3, '0')}
+                          </td>
+                          <td className="py-4 px-6 text-brand-charcoal flex items-center gap-1.5 text-xs">
+                            <Clock className="w-3.5 h-3.5 text-gray-400" />
                             {item.claimedAt
                               ? new Date(item.claimedAt).toLocaleString('en-IN', {
                                   day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
                                 })
                               : 'Recently'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-sm font-extrabold text-emerald-600">+{item.points} pts</span>
-                    </div>
-                  </motion.div>
-                ))}
+                          </td>
+                          <td className={`py-4 px-6 text-right font-extrabold ${item.zeroedOut ? 'text-gray-400 line-through' : 'text-brand-blue'}`}>
+                            +{item.points} pts
+                          </td>
+                          <td className="py-4 px-6 text-right">
+                            {item.zeroedOut ? (
+                              <span className="px-2.5 py-1 bg-red-100 text-red-700 text-[10px] font-bold rounded-full uppercase tracking-wider border border-red-200">
+                                Zeroed Out
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-1 bg-brand-blue-50 text-brand-blue text-[10px] font-bold rounded-full uppercase tracking-wider border border-brand-blue-50">
+                                Claimed
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </motion.div>

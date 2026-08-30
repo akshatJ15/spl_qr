@@ -164,14 +164,14 @@ export default function UnifiedAuthScreen({
             >
               <button
                 onClick={closeApkModal}
-                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-700 rounded-xl hover:bg-gray-100/80 transition-all cursor-pointer"
+                className="absolute top-4 right-4 p-2 text-gray-400 hover:text-brand-charcoal rounded-xl hover:bg-gray-100/80 transition-all cursor-pointer"
                 aria-label="Close modal"
               >
                 <X className="w-4 h-4" />
               </button>
 
               {/* Floating icon */}
-              <div className="float w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-violet-700 text-white flex items-center justify-center shadow-lg mb-5" style={{ boxShadow: '0 8px 24px rgba(64,69,203,0.3)' }}>
+              <div className="float w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-blue to-brand-blue text-white flex items-center justify-center shadow-lg mb-5" style={{ boxShadow: '0 8px 24px rgba(23, 131, 193,0.3)' }}>
                 <Smartphone className="w-8 h-8" />
               </div>
 
@@ -179,10 +179,10 @@ export default function UnifiedAuthScreen({
                 <span className="flex items-center gap-1"><Zap className="w-3 h-3" /> Faster Experience</span>
               </div>
 
-              <h3 className="text-xl font-extrabold text-gray-900 tracking-tight">
+              <h3 className="text-xl font-extrabold text-brand-charcoal tracking-tight">
                 Get the App
               </h3>
-              <p className="text-sm text-gray-500 mt-2 leading-relaxed px-2">
+              <p className="text-sm text-brand-charcoal mt-2 leading-relaxed px-2">
                 Instant camera scanning, real-time rewards tracking, and 1-tap claiming — all in one lightweight app.
               </p>
 
@@ -193,9 +193,9 @@ export default function UnifiedAuthScreen({
                   { icon: Star, label: 'Track Points' },
                   { icon: Sparkles, label: 'Auto Claim' },
                 ].map(({ icon: Icon, label }) => (
-                  <div key={label} className="flex flex-col items-center gap-1.5 py-2.5 px-2 bg-violet-50/60 rounded-xl border border-violet-100/50">
-                    <Icon className="w-4 h-4 text-violet-600" />
-                    <span className="text-[10px] font-semibold text-violet-700">{label}</span>
+                  <div key={label} className="flex flex-col items-center gap-1.5 py-2.5 px-2 bg-brand-blue-50/60 rounded-xl border border-brand-blue-50/50">
+                    <Icon className="w-4 h-4 text-brand-blue" />
+                    <span className="text-[10px] font-semibold text-brand-blue">{label}</span>
                   </div>
                 ))}
               </div>
@@ -211,7 +211,7 @@ export default function UnifiedAuthScreen({
 
                 <button
                   onClick={closeApkModal}
-                  className="w-full py-2.5 text-sm font-semibold text-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
+                  className="w-full py-2.5 text-sm font-semibold text-gray-400 hover:text-brand-charcoal transition-colors cursor-pointer"
                 >
                   Continue on Website →
                 </button>
@@ -228,13 +228,13 @@ export default function UnifiedAuthScreen({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <div className="inline-flex p-3.5 bg-gradient-to-br from-violet-500 to-violet-700 text-white rounded-2xl shadow-lg mb-4" style={{ boxShadow: '0 8px 24px rgba(64,69,203,0.3)' }}>
+        <div className="inline-flex p-3.5 bg-gradient-to-br from-brand-blue to-brand-blue text-white rounded-2xl shadow-lg mb-4" style={{ boxShadow: '0 8px 24px rgba(23, 131, 193,0.3)' }}>
           <span className="font-extrabold text-2xl font-sans leading-none flex items-center justify-center w-7 h-7">M</span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
           <span className="gradient-text">My Scan</span>
         </h1>
-        <p className="text-sm text-gray-500 mt-1.5 font-medium">
+        <p className="text-sm text-brand-charcoal mt-1.5 font-medium">
           Scan codes · Earn points · Redeem rewards
         </p>
       </motion.div>
@@ -256,8 +256,8 @@ export default function UnifiedAuthScreen({
               onClick={() => setRole(r)}
               className={`relative flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
                 role === r
-                  ? 'bg-white text-violet-700 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                  ? 'bg-white text-brand-blue shadow-sm'
+                  : 'text-brand-charcoal hover:text-brand-charcoal'
               }`}
             >
               {r === 'user' ? <User className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
@@ -286,15 +286,15 @@ export default function UnifiedAuthScreen({
                     onClick={() => setAuthMode(mode)}
                     className={`relative flex-1 pb-3 text-sm font-semibold transition-colors cursor-pointer ${
                       authMode === mode 
-                        ? 'text-violet-600' 
-                        : 'text-gray-400 hover:text-gray-600'
+                        ? 'text-brand-blue' 
+                        : 'text-gray-400 hover:text-brand-charcoal'
                     }`}
                   >
                     {mode === 'signin' ? 'Sign In' : 'Sign Up'}
                     {authMode === mode && (
                       <motion.div
                         layoutId="auth-tab-indicator"
-                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-500 rounded-full"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-brand-blue rounded-full"
                         transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                       />
                     )}
@@ -304,13 +304,13 @@ export default function UnifiedAuthScreen({
 
               <form onSubmit={handleUserAuth} className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-semibold text-gray-600 flex items-center justify-between">
+                  <label className="text-xs font-semibold text-brand-charcoal flex items-center justify-between">
                     <span>Mobile Number</span>
                     <span className="text-[11px] font-normal text-gray-400">10 digits</span>
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <span className="text-xs font-bold text-gray-500">+91</span>
+                      <span className="text-xs font-bold text-brand-charcoal">+91</span>
                     </div>
                     <input
                       type="tel"
@@ -333,7 +333,7 @@ export default function UnifiedAuthScreen({
                       transition={{ duration: 0.25 }}
                       className="flex flex-col gap-2 overflow-hidden"
                     >
-                      <label className="text-xs font-semibold text-gray-600">Full Name</label>
+                      <label className="text-xs font-semibold text-brand-charcoal">Full Name</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
                           <User className="w-4 h-4" />
@@ -378,7 +378,7 @@ export default function UnifiedAuthScreen({
               className="flex flex-col gap-4"
             >
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-gray-600 flex items-center justify-between">
+                <label className="text-xs font-semibold text-brand-charcoal flex items-center justify-between">
                   <span>Security PIN</span>
                   <span className="pill-warning text-[10px] font-bold px-2 py-0.5 rounded-full">Authorized Only</span>
                 </label>

@@ -49,7 +49,8 @@ async function startServer() {
   }));
   // Use Helmet for standard security headers
   app.use(helmet({
-    crossOriginResourcePolicy: false // Allows APK downloads across origins if needed
+    crossOriginResourcePolicy: false, // Allows APK downloads across origins if needed
+    contentSecurityPolicy: false // Disabling CSP to allow Vite HMR and inline styles
   }));
   app.use(express.json());
 

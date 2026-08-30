@@ -61,10 +61,10 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
           <div className={`p-4 rounded-2xl mb-4 transition-colors duration-300 ${isSuccess ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'}`}>
             <Lock className="w-8 h-8" />
           </div>
-          <h2 id="admin-login-title" className="text-2xl font-bold text-gray-900 tracking-tight">
+          <h2 id="admin-login-title" className="text-2xl font-bold text-brand-charcoal tracking-tight">
             Admin Authentication
           </h2>
-          <p id="admin-login-subtitle" className="mt-2 text-sm text-gray-500 leading-relaxed">
+          <p id="admin-login-subtitle" className="mt-2 text-sm text-brand-charcoal leading-relaxed">
             Enter authorized local system credentials to gain management portal entry.
           </p>
         </div>
@@ -75,7 +75,7 @@ export default function AdminLogin({ onLoginSuccess }: AdminLoginProps) {
               id="admin-login-error"
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="p-3.5 bg-rose-50 border border-rose-100 text-rose-700 rounded-xl text-xs flex items-start gap-2.5 font-medium"
+              className="p-3.5 bg-brand-blue-50 border border-brand-blue-50 text-brand-blue rounded-xl text-xs flex items-start gap-2.5 font-medium"
             >
               <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{error}</span>

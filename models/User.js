@@ -13,6 +13,10 @@ const UserSchema = new mongoose.Schema({
   points: {
     type: Number,
     default: 0
+  },
+  lastResetAt: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true
@@ -44,6 +48,7 @@ export const User = {
         name: data.name,
         phone: data.phone,
         points: data.points ?? 0,
+        lastResetAt: data.lastResetAt ?? null,
         createdAt: new Date(),
         updatedAt: new Date(),
         save: async function() {

@@ -232,10 +232,10 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess }: QrSca
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl flex flex-col"
+        className="relative w-full max-w-md bg-brand-charcoal border border-brand-charcoal rounded-3xl overflow-hidden shadow-2xl flex flex-col"
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-900/90">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-brand-charcoal bg-brand-charcoal/90">
           <div className="flex items-center gap-2">
             <div className="p-1.5 bg-blue-600/20 text-blue-400 rounded-lg">
               <Camera className="w-5 h-5" />
@@ -248,7 +248,7 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess }: QrSca
           <button
             id="close-scanner-modal-btn"
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-full transition-colors cursor-pointer"
+            className="p-2 text-slate-400 hover:text-white bg-brand-charcoal hover:bg-slate-700 rounded-full transition-colors cursor-pointer"
             aria-label="Close Scanner"
           >
             <X className="w-5 h-5" />
@@ -300,7 +300,7 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess }: QrSca
               <div className="flex gap-2">
                 <button
                   onClick={startCamera}
-                  className="flex items-center gap-1.5 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 py-2 bg-brand-charcoal hover:bg-slate-700 text-white rounded-xl text-xs font-semibold transition-all cursor-pointer"
                 >
                   <RefreshCw className="w-3.5 h-3.5" /> Retry Camera
                 </button>
@@ -310,9 +310,9 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess }: QrSca
         </div>
 
         {/* Modal Controls / Upload Fallback */}
-        <div className="p-4 bg-slate-900 border-t border-slate-800 flex flex-col gap-3">
+        <div className="p-4 bg-brand-charcoal border-t border-brand-charcoal flex flex-col gap-3">
           {errorMessage && hasCameraPermission !== false && (
-            <div className="p-2.5 bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-xl text-xs flex items-center gap-2">
+            <div className="p-2.5 bg-brand-blue/10 border border-brand-blue/20 text-rose-300 rounded-xl text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMessage}</span>
             </div>
@@ -330,7 +330,7 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess }: QrSca
               id="upload-qr-file-btn"
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-medium transition-colors cursor-pointer border border-slate-700"
+              className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-brand-charcoal hover:bg-slate-700 text-slate-200 hover:text-white rounded-xl text-xs font-medium transition-colors cursor-pointer border border-slate-700"
             >
               <Upload className="w-4 h-4" />
               <span>Upload Image QR</span>
@@ -339,7 +339,7 @@ export default function QrScannerModal({ isOpen, onClose, onScanSuccess }: QrSca
             <button
               type="button"
               onClick={onClose}
-              className="py-3 px-5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-medium transition-colors cursor-pointer"
+              className="py-3 px-5 bg-brand-charcoal hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-medium transition-colors cursor-pointer"
             >
               Cancel
             </button>

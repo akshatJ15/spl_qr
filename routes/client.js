@@ -43,7 +43,7 @@ const requireClientAuth = async (req, res, next) => {
     if (decoded.userId) {
       user = await User.findById(decoded.userId);
     }
-    
+
     // Fallback: If not found by ID but we have phone number in the JWT
     if (!user && decoded.phone) {
       user = await User.findOne({ phone: decoded.phone });
@@ -118,7 +118,7 @@ router.post('/auth', async (req, res) => {
     console.log("--> DB USER SAVED:", user);
 
     const token = jwt.sign(
-      { 
+      {
         userId: String(user._id || user.id),
         phone: user.phone,
         name: user.name
@@ -196,7 +196,7 @@ router.post('/claim-token', requireClientAuth, async (req, res) => {
     console.log("--> USER POINTS INCREMENTED:", updatedUser);
 
     // Fire Telegram notification notifying of the successful claim
-    const claimMessage = `✅ <b>Points Claimed!</b>\nName: ${req.user.name}\nPhone: ${req.user.phone}\nPoints Added: ${updatedToken.points}\nNew Balance: ${updatedUser.points}`;
+    const claimMessage = `✅ <b>Points Claimed!</b>\nName: ${req.user.name}\nPhone: ${req.user.phone}\nLot No: ${String(updatedToken.lotNumber || 0).padStart(3, '0')}\nPoints Added: ${updatedToken.points}\nNew Balance: ${updatedUser.points}`;
     sendTelegramAlert(claimMessage);
 
     return res.status(200).json({
@@ -264,7 +264,7 @@ router.post('/login-phone', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { 
+      {
         userId: String(user._id || user.id),
         phone: user.phone,
         name: user.name
@@ -293,8 +293,9 @@ router.post('/login-phone', async (req, res) => {
 router.get('/history', requireClientAuth, async (req, res) => {
   try {
     const userPhone = req.user.phone;
+    const user = await User.findOne({ phone: userPhone });
     let queryResult = QrToken.find({ claimedBy: userPhone });
-    
+
     // Check if queryResult is chainable Mongoose query or promise
     if (queryResult && typeof queryResult.sort === 'function') {
       queryResult = queryResult.sort({ claimedAt: -1 });
@@ -309,15 +310,22 @@ router.get('/history', requireClientAuth, async (req, res) => {
     const history = await queryResult;
     const historyArray = Array.isArray(history) ? history : [];
 
+    const lastReset = user.lastResetAt ? new Date(user.lastResetAt).getTime() : 0;
+
     return res.status(200).json({
       success: true,
-      history: historyArray.map(item => ({
-        uid: item.uid,
-        points: item.points,
-        claimedAt: item.claimedAt,
-        claimedBy: item.claimedBy,
-        used: item.used
-      }))
+      history: historyArray.map(item => {
+        const claimTime = item.claimedAt ? new Date(item.claimedAt).getTime() : 0;
+        return {
+          uid: item.uid,
+          lotNumber: item.lotNumber || 0,
+          points: item.points,
+          claimedAt: item.claimedAt,
+          claimedBy: item.claimedBy,
+          used: item.used,
+          zeroedOut: claimTime > 0 && lastReset > 0 && claimTime <= lastReset
+        };
+      })
     });
   } catch (error) {
     console.error("❌ HISTORY FETCH ERROR:", error);

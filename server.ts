@@ -159,6 +159,7 @@ async function startServer() {
   // Direct APK Download Endpoint
   app.get(["/download-apk", "/download/app.apk", "/app-debug.apk"], (req, res) => {
     const possibleApkPaths = [
+      path.join(process.cwd(), 'public', 'My Scan.apk'),
       path.join(process.cwd(), 'public', 'Qr_incentive.apk'),
       path.join(process.cwd(), 'public', 'app-debug.apk'),
       path.join(process.cwd(), 'public', 'app-release.apk'),

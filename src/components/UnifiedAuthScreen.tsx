@@ -56,7 +56,7 @@ export default function UnifiedAuthScreen({
   const triggerApkDownload = () => {
     const link = document.createElement('a');
     link.href = '/download-apk';
-    link.download = 'MyScan.apk';
+    link.download = 'QuickScan.apk';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

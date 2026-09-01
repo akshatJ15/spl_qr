@@ -214,6 +214,18 @@ async function startServer() {
 
 
 
+  // APK Download Route - serves the latest built APK from public/
+  app.get('/download-apk', (req, res) => {
+    const apkPath = path.join(process.cwd(), 'public', 'QuickScan.apk');
+    const fs2 = require('fs');
+    if (!fs2.existsSync(apkPath)) {
+      return res.status(404).json({ error: 'APK not found. Please contact the administrator.' });
+    }
+    res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+    res.setHeader('Content-Disposition', 'attachment; filename="QuickScan.apk"');
+    res.sendFile(apkPath);
+  });
+
   // Dedicated JSON 404 handler for API routes to prevent HTML doctype responses on API failures
   app.all('/api/*', (req, res) => {
     res.status(404).json({

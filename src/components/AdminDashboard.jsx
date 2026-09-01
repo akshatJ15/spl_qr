@@ -505,44 +505,43 @@ export default function AdminDashboard() {
       
       {/* Dynamic Print CSS Injection Block */}
       <style dangerouslySetInnerHTML={{ __html: `
+        @media screen {
+          /* Off-screen during normal view - portal is in DOM but invisible */
+          #printable-grid-frame-wrapper {
+            position: fixed;
+            left: -9999px;
+            top: -9999px;
+            pointer-events: none;
+            width: 800px;
+          }
+        }
         @media print {
-          /* Completely hide all elements by default */
-          body * {
-            visibility: hidden !important;
-            background: none !important;
+          /* Hide the React app root - NOT body > * which would hide the portal too */
+          #root {
+            display: none !important;
           }
-          /* Make only the printable grid frame and its children visible */
-          #printable-grid-frame, #printable-grid-frame * {
-            visibility: visible !important;
-          }
-          /* Grid dimensions for 2x2 inch cards */
-          #printable-grid-frame {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
+          /* Show only the portalled print grid (it's a sibling of #root, direct child of body) */
+          #printable-grid-frame-wrapper {
+            display: block !important;
+            position: static !important;
+            left: auto !important;
+            top: auto !important;
             width: 100% !important;
-            display: grid !important;
-            grid-template-columns: repeat(auto-fill, 2in) !important;
-            gap: 15px !important;
+            pointer-events: auto !important;
+          }
+          #printable-grid-frame {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 12px !important;
             padding: 10px !important;
-            margin: 0 !important;
+            background: white !important;
           }
           .qr-print-card {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
-            border: 1px dashed #999999 !important;
-            width: 2in !important;
-            height: 2in !important;
-            padding: 8px !important;
-            border-radius: 8px !important;
             background-color: #ffffff !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: space-between !important;
             box-shadow: none !important;
-            box-sizing: border-box !important;
-            overflow: hidden !important;
+            overflow: visible !important;
           }
         }
       `}} />
@@ -982,21 +981,22 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Embedded print view container when multiple codes exist */}
-      {generatedQrs.length > 0 && (
-        <div className="hidden print:block">
+      {/* Print-only grid - portalled into document.body so it's a sibling of #root.
+          This is critical: body > * { display:none } will hide #root but NOT this portal div. */}
+      {createPortal(
+        <div id="printable-grid-frame-wrapper">
           <div id="printable-grid-frame">
             {generatedQrs.map((tokenObj) => {
               const uid = tokenObj.uid || tokenObj;
               const lotNumber = tokenObj.lotNumber || 0;
               const claimUrl = `${qrBaseUrl}/claim?token=${uid}`;
               return (
-                <div key={uid} className="no-print-border w-[220px] bg-white rounded-[20px] flex flex-col overflow-hidden relative m-2" style={{ border: '2px dashed #CBD5E1' }}>
-                  <div className="w-full bg-[#0078D7] text-white py-2 flex items-center justify-center">
-                    <span className="font-black tracking-widest text-[10px] uppercase">Quick Scan Rewards</span>
+                <div key={uid} className="qr-print-card" style={{ border: '2px dashed #CBD5E1', width: '220px', backgroundColor: 'white', borderRadius: '20px', display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', margin: '8px' }}>
+                  <div style={{ width: '100%', backgroundColor: '#0078D7', color: 'white', padding: '8px 0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontWeight: 900, letterSpacing: '0.15em', fontSize: '10px', textTransform: 'uppercase' }}>Quick Scan Rewards</span>
                   </div>
-                  <div className="p-3 flex flex-col items-center bg-white">
-                    <div className="p-1 border border-gray-100 rounded-xl mb-2">
+                  <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', backgroundColor: 'white' }}>
+                    <div style={{ padding: '4px', border: '1px solid #F3F4F6', borderRadius: '12px', marginBottom: '8px' }}>
                       <QRCodeSVG
                         value={claimUrl}
                         size={120}
@@ -1010,20 +1010,20 @@ export default function AdminDashboard() {
                         }}
                       />
                     </div>
-                    <div className="text-center w-full">
-                      <div className="text-[#FB734E] font-black text-lg uppercase tracking-tight leading-none mb-1">
+                    <div style={{ textAlign: 'center', width: '100%' }}>
+                      <div style={{ color: '#FB734E', fontWeight: 900, fontSize: '18px', textTransform: 'uppercase', letterSpacing: '-0.02em', lineHeight: 1, marginBottom: '4px' }}>
                         GET {generatedPoints} PTS!
                       </div>
-                      <p className="text-[#1D1E6B] font-bold text-[9px] tracking-widest uppercase mt-2 mb-2">
+                      <p style={{ color: '#1D1E6B', fontWeight: 700, fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: '8px', marginBottom: '8px' }}>
                         Scan To Claim
                       </p>
                     </div>
                   </div>
-                  <div className="w-full bg-gray-50 py-1.5 px-3 flex items-center justify-between border-t border-dashed border-gray-200">
-                    <span className="text-[9px] font-black text-brand-charcoal font-mono">
+                  <div style={{ width: '100%', backgroundColor: '#F9FAFB', padding: '6px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px dashed #E5E7EB' }}>
+                    <span style={{ fontSize: '9px', fontWeight: 900, fontFamily: 'monospace' }}>
                       LOT {String(lotNumber).padStart(3, '0')}
                     </span>
-                    <span className="text-[7px] text-gray-400 font-mono">
+                    <span style={{ fontSize: '7px', color: '#9CA3AF', fontFamily: 'monospace' }}>
                       ID:{uid.substring(0, 8)}
                     </span>
                   </div>
@@ -1031,7 +1031,8 @@ export default function AdminDashboard() {
               );
             })}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       </motion.div>
       )}

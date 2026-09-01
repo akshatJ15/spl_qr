@@ -47,7 +47,6 @@ interface UserDashboardProps {
 
 export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDashboardProps) {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'scan' | 'history'>('scan');
   
   const [history, setHistory] = useState<ScanHistoryItem[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
@@ -102,8 +101,8 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
   }, [onUpdateUser]);
 
   useEffect(() => {
-    if (activeTab === 'history') fetchHistory();
-  }, [activeTab, fetchHistory]);
+    fetchHistory();
+  }, [fetchHistory]);
 
   const handleScanSuccess = async (scannedToken: string) => {
     setIsScannerOpen(false);
@@ -163,314 +162,240 @@ export default function UserDashboard({ user, onLogout, onUpdateUser }: UserDash
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto flex flex-col gap-5 px-3 sm:px-4 pb-12">
+    <div className="w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-6 lg:gap-10 px-4 sm:px-6 pb-12 mt-6">
       
-      {/* ===== APK BANNER ===== */}
-      <motion.div 
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-card w-full rounded-2xl p-3.5 flex items-center justify-between gap-3"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-brand-blue to-brand-blue text-white rounded-xl flex items-center justify-center shadow-sm shrink-0" style={{ boxShadow: '0 4px 12px rgba(23, 131, 193,0.25)' }}>
-            <Smartphone className="w-5 h-5" />
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-brand-charcoal leading-tight">Get Android App</h4>
-            <p className="text-[11px] text-brand-charcoal mt-0.5">1-tap scanning & instant rewards</p>
-          </div>
-        </div>
-        <button
-          onClick={triggerApkDownload}
-          className="btn-primary px-3.5 py-2 text-white rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer shrink-0"
-        >
-          <span>Get APK</span>
-          <ChevronRight className="w-3.5 h-3.5" />
-        </button>
-      </motion.div>
-
-      {/* ===== PROFILE CARD ===== */}
-      <motion.div 
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
-        className="glass-card-elevated rounded-[28px] p-5 sm:p-6 flex flex-col gap-5"
-      >
-        {/* User info row */}
-        <div className="flex items-center justify-between">
+      {/* ===== LEFT COLUMN: CARDS & ACTIONS ===== */}
+      <div className="w-full lg:w-1/3 lg:max-w-[360px] shrink-0 flex flex-col gap-6">
+        
+        {/* APK BANNER (Compact) */}
+        <div className="bg-white rounded-[20px] p-4 flex items-center justify-between shadow-sm border border-[#EFF0F4]">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-blue to-brand-blue flex items-center justify-center text-white font-bold text-lg shadow-sm" style={{ boxShadow: '0 4px 12px rgba(23, 131, 193,0.25)' }}>
-              {user.name.charAt(0).toUpperCase()}
+            <div className="w-10 h-10 bg-[#EFF0F4] rounded-xl flex items-center justify-center text-[#11358B]">
+              <Smartphone className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg sm:text-xl font-extrabold text-brand-charcoal leading-tight tracking-tight">
-                {user.name}
-              </h2>
-              <p className="text-xs text-brand-charcoal flex items-center gap-1 mt-0.5 font-medium">
-                <Phone className="w-3 h-3 text-gray-400" />
-                {user.phone}
-              </p>
+              <h4 className="text-base font-extrabold text-[#11358B] leading-tight">Get App</h4>
+              <p className="text-sm text-gray-400 mt-0.5 font-medium">1-tap scanning</p>
             </div>
           </div>
           <button
-            onClick={onLogout}
-            className="p-2.5 sm:px-3.5 sm:py-2 text-gray-400 hover:text-brand-blue hover:bg-brand-blue-50 rounded-xl transition-all border border-gray-100/80 flex items-center gap-1.5 text-xs font-semibold cursor-pointer"
-            title="Sign Out"
+            onClick={triggerApkDownload}
+            className="bg-[#6192FC] text-white px-5 py-3 min-h-[44px] rounded-xl text-sm font-bold hover:bg-[#11358B] transition-colors shadow-sm"
           >
-            <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">Sign Out</span>
+            Download
           </button>
         </div>
 
-        {/* ===== BALANCE CARD ===== */}
-        <div className="balance-card text-white rounded-2xl p-5 sm:p-6 flex items-center justify-between relative z-0">
-          <div className="relative z-10">
-            <span className="text-[11px] uppercase font-semibold tracking-widest text-brand-blue-50/80">Current Balance</span>
-            <div className="text-3xl sm:text-4xl font-extrabold tracking-tight mt-1 flex items-baseline gap-2">
-              <motion.span
-                key={user.points}
-                initial={{ scale: 1.15, opacity: 0.5 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              >
-                {user.points}
-              </motion.span>
-              <span className="text-xs font-bold text-brand-blue-50/70 uppercase">Points</span>
+        {/* BALANCE CARD (Credit Card Proportions) */}
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1 }}
+          className="w-full min-h-[140px] sm:min-h-[160px] bg-[#11358B] rounded-[24px] p-5 sm:p-6 flex flex-col justify-between relative overflow-hidden shadow-xl"
+        >
+          {/* Decorative background elements */}
+          <div className="absolute top-0 right-0 w-48 h-48 bg-[#6192FC] opacity-30 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+          
+          <div className="relative z-10 flex justify-between items-start">
+            <div>
+              <span className="text-xs sm:text-sm uppercase font-bold tracking-widest text-[#EFF0F4]/60">Current Balance</span>
+              <div className="text-4xl sm:text-5xl font-extrabold tracking-tight mt-1 text-white">
+                <motion.span key={user.points} initial={{ scale: 1.15, opacity: 0.5 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
+                  {user.points}
+                </motion.span>
+              </div>
             </div>
-            <p className="text-xs text-brand-blue-50/50 mt-1.5 font-medium flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" />
-              ₹{user.points} redeemable value
-            </p>
           </div>
-          <div className="relative z-10 p-3.5 bg-white/10 text-brand-blue-50 rounded-2xl border border-white/10 backdrop-blur-sm">
-            <Award className="w-8 h-8" />
-          </div>
-        </div>
-      </motion.div>
-
-      {/* ===== TAB NAVIGATION ===== */}
-      <motion.div 
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="grid grid-cols-2 gap-1.5 bg-gray-100/80 p-1.5 rounded-2xl"
-      >
-        {([
-          { id: 'scan' as const, icon: QrCode, label: 'Scan Token' },
-          { id: 'history' as const, icon: History, label: 'History' },
-        ]).map(({ id, icon: Icon, label }) => (
-          <button
-            key={id}
-            onClick={() => setActiveTab(id)}
-            className={`relative flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all duration-200 cursor-pointer ${
-              activeTab === id
-                ? 'bg-white text-brand-blue shadow-sm'
-                : 'text-brand-charcoal hover:text-brand-charcoal'
-            }`}
-          >
-            <Icon className="w-4 h-4" />
-            <span>{label}</span>
-          </button>
-        ))}
-      </motion.div>
-
-      {/* ===== TAB CONTENT ===== */}
-      <AnimatePresence mode="wait">
-        {activeTab === 'scan' ? (
-          <motion.div
-            key="scan-tab"
-            initial={{ opacity: 0, y: 10, filter: 'blur(4px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -10, filter: 'blur(4px)' }}
-            transition={{ duration: 0.25 }}
-            className="flex flex-col gap-4"
-          >
-            {/* Status Banners */}
-            {claimStatus.type === 'loading' && (
-              <div className="glass-card rounded-2xl p-4 flex items-center gap-3 text-brand-navy">
-                <div className="w-5 h-5 border-2 border-brand-blue border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-xs font-semibold">{claimStatus.message}</span>
-              </div>
-            )}
-
-            {claimStatus.type === 'success' && (
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="glass-card-elevated rounded-[24px] p-6 sm:p-7 flex flex-col items-center text-center gap-3 border-brand-blue-50/60"
-                style={{ background: 'rgba(23, 131, 193,0.25)', borderColor: 'rgba(23, 131, 193,0.25)' }}
-              >
-                <div className="w-16 h-16 rounded-full bg-brand-blue-50 text-brand-blue flex items-center justify-center shadow-inner">
-                  <CheckCircle2 className="w-9 h-9" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-extrabold text-emerald-900">+{claimStatus.pointsAdded} Points!</h3>
-                  <p className="text-xs text-brand-blue mt-1 max-w-sm font-medium">{claimStatus.message}</p>
-                  {claimStatus.tokenUid && (
-                    <span className="inline-block mt-2 font-mono text-[10px] bg-brand-blue-50/80 px-2 py-0.5 rounded-lg text-brand-blue">
-                      {claimStatus.tokenUid.slice(0, 12)}...
-                    </span>
-                  )}
-                </div>
-                <button
-                  onClick={() => setClaimStatus({ type: 'idle' })}
-                  className="mt-1 px-5 py-2 bg-brand-blue hover:bg-brand-blue text-white rounded-xl text-xs font-bold cursor-pointer active:scale-95 transition-all"
-                >
-                  Dismiss
-                </button>
-              </motion.div>
-            )}
-
-            {claimStatus.type === 'error' && (
-              <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="glass-card-elevated rounded-[24px] p-6 sm:p-7 flex flex-col items-center text-center gap-3"
-                style={{ background: 'rgba(23, 131, 193,0.25)', borderColor: 'rgba(23, 131, 193,0.25)' }}
-              >
-                <div className="w-16 h-16 rounded-full bg-brand-blue-50 text-brand-blue flex items-center justify-center">
-                  <AlertCircle className="w-9 h-9" />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-rose-900">QR Code Invalid</h3>
-                  <p className="text-xs text-brand-blue mt-1 max-w-sm font-medium">{claimStatus.message}</p>
-                </div>
-                <button
-                  onClick={() => setClaimStatus({ type: 'idle' })}
-                  className="mt-1 px-5 py-2 bg-brand-blue hover:bg-brand-blue text-white rounded-xl text-xs font-bold cursor-pointer active:scale-95 transition-all"
-                >
-                  Try Another QR
-                </button>
-              </motion.div>
-            )}
-
-            {/* ===== SCAN ACTION CARD ===== */}
-            <div className="glass-card-elevated rounded-[28px] p-7 sm:p-9 flex flex-col items-center text-center">
-              <div className="float w-20 h-20 rounded-3xl bg-brand-blue-50 text-brand-blue flex items-center justify-center mb-5 border border-brand-blue-50/60" style={{ boxShadow: '0 4px 16px rgba(23, 131, 193,0.25) inset, 0 2px 8px rgba(23, 131, 193,0.25)' }}>
-                <QrCode className="w-10 h-10" />
-              </div>
-
-              <h3 className="text-xl font-extrabold text-brand-charcoal tracking-tight">Scan Incentive Token</h3>
-              <p className="text-sm text-brand-charcoal mt-2 max-w-xs leading-relaxed font-medium">
-                Point your camera at the QR code on the package to claim your reward points instantly.
+          
+          <div className="relative z-10 flex items-end justify-between w-full mt-2 sm:mt-4">
+            <div>
+              <span className="text-xs sm:text-sm uppercase font-bold tracking-wider text-[#EFF0F4]/60 block mb-0.5">Redeemable Value</span>
+              <p className="text-sm sm:text-base font-bold text-[#C7EF66]">
+                ₹{user.points}
               </p>
-
-              <button
-                onClick={() => {
-                  setClaimStatus({ type: 'idle' });
-                  setIsScannerOpen(true);
-                }}
-                className="btn-primary mt-7 w-full max-w-sm py-4 px-6 text-white rounded-2xl font-bold text-base flex items-center justify-center gap-2.5 cursor-pointer"
-              >
-                <Zap className="w-5 h-5" />
-                <span>Open QR Scanner</span>
-              </button>
             </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="history-tab"
-            initial={{ opacity: 0, y: 10, filter: 'blur(4px)' }}
-            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -10, filter: 'blur(4px)' }}
-            transition={{ duration: 0.25 }}
-            className="flex flex-col gap-3"
-          >
-            <div className="flex items-center justify-between px-1">
-              <span className="text-xs font-bold text-brand-charcoal uppercase tracking-wider flex items-center gap-1.5">
-                <Coins className="w-3.5 h-3.5" />
-                Claimed Records ({history.length})
-              </span>
-              <button
-                onClick={fetchHistory}
-                disabled={isLoadingHistory}
-                className="flex items-center gap-1 text-xs text-brand-blue hover:text-brand-navy font-semibold cursor-pointer p-1"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${isLoadingHistory ? 'animate-spin' : ''}`} />
-                <span>Refresh</span>
-              </button>
-            </div>
+            <Award className="w-8 h-8 text-[#6192FC] opacity-90" />
+          </div>
+        </motion.div>
+      </div>
 
-            {isLoadingHistory ? (
-              <div className="glass-card-elevated rounded-[24px] p-8 flex flex-col items-center justify-center text-center gap-3">
-                <div className="w-8 h-8 border-3 border-brand-blue border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-xs text-brand-charcoal font-medium">Loading scan history...</p>
-              </div>
-            ) : historyError ? (
-              <div className="glass-card rounded-2xl p-4 text-xs text-brand-blue flex items-center gap-2 font-medium" style={{ background: 'rgba(23, 131, 193,0.25)' }}>
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{historyError}</span>
-              </div>
-            ) : history.length === 0 ? (
-              <div className="glass-card-elevated rounded-[24px] p-8 flex flex-col items-center justify-center text-center gap-3">
-                <div className="p-3.5 bg-gray-100 text-gray-400 rounded-2xl">
-                  <History className="w-8 h-8" />
+      {/* ===== RIGHT COLUMN: TRANSACTIONS ===== */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex items-center justify-between mb-4 sm:mb-5 px-1">
+          <h3 className="text-lg sm:text-xl font-extrabold text-[#11358B]">Transactions</h3>
+          
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <button
+              onClick={fetchHistory}
+              disabled={isLoadingHistory}
+              className="flex items-center justify-center min-h-[44px] min-w-[44px] sm:px-3 text-gray-400 hover:text-[#6192FC] transition-colors"
+            >
+              <RefreshCw className={`w-4 h-4 sm:w-5 sm:h-5 ${isLoadingHistory ? 'animate-spin' : ''}`} />
+            </button>
+            <button
+              onClick={() => {
+                setClaimStatus({ type: 'idle' });
+                setIsScannerOpen(true);
+              }}
+              className="bg-[#11358B] text-[#C7EF66] hover:bg-[#C7EF66] hover:text-[#11358B] px-4 sm:px-5 py-2.5 sm:py-3 min-h-[44px] rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 transition-all shadow-sm"
+            >
+              <QrCode className="w-4 h-4" />
+              <span className="hidden sm:inline">Scan QR</span>
+              <span className="sm:hidden">Scan</span>
+            </button>
+          </div>
+        </div>
+
+        {/* STATUS BANNERS OVERLAY */}
+        <AnimatePresence>
+          {claimStatus.type !== 'idle' && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="w-full z-10 mb-4 overflow-hidden"
+            >
+              {claimStatus.type === 'loading' && (
+                <div className="bg-[#EFF0F4] rounded-2xl p-4 flex items-center gap-3 text-[#11358B]">
+                  <div className="w-5 h-5 border-2 border-[#6192FC] border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-xs font-semibold">{claimStatus.message}</span>
                 </div>
-                <h4 className="font-extrabold text-brand-charcoal text-sm">No Scans Yet</h4>
-                <p className="text-xs text-brand-charcoal max-w-xs font-medium">
-                  Scan an active QR code to see your reward history here.
-                </p>
-                <button
-                  onClick={() => setActiveTab('scan')}
-                  className="mt-2 pill-brand px-4 py-2 rounded-xl text-xs font-bold cursor-pointer active:scale-95 transition-all"
-                >
-                  Scan First QR Now
-                </button>
-              </div>
-            ) : (
-              <div className="glass-card-elevated rounded-[24px] overflow-hidden bg-white border border-gray-100 shadow-sm mt-2">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-gray-100 text-brand-charcoal text-xs font-semibold uppercase tracking-wider bg-gray-50/50">
-                        <th className="py-4 px-6">QR Token</th>
-                        <th className="py-4 px-6">Lot No.</th>
-                        <th className="py-4 px-6">Date Scanned</th>
-                        <th className="py-4 px-6 text-right">Points</th>
-                        <th className="py-4 px-6 text-right">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
-                      {history.map((item, idx) => (
-                        <tr key={item.uid || idx} className={`transition-colors text-sm ${item.zeroedOut ? 'bg-red-50/30 hover:bg-red-50/50' : 'hover:bg-gray-50'}`}>
-                          <td className="py-4 px-6 font-mono text-brand-charcoal font-medium">
-                            {item.uid ? item.uid.slice(0, 8) + '...' : 'UNKNOWN'}
-                          </td>
-                          <td className="py-4 px-6 font-mono text-brand-charcoal font-bold text-xs">
-                            {String(item.lotNumber || 0).padStart(3, '0')}
-                          </td>
-                          <td className="py-4 px-6 text-brand-charcoal flex items-center gap-1.5 text-xs">
-                            <Clock className="w-3.5 h-3.5 text-gray-400" />
-                            {item.claimedAt
-                              ? new Date(item.claimedAt).toLocaleString('en-IN', {
-                                  day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-                                })
-                              : 'Recently'}
-                          </td>
-                          <td className={`py-4 px-6 text-right font-extrabold ${item.zeroedOut ? 'text-gray-400 line-through' : 'text-brand-blue'}`}>
-                            +{item.points} pts
-                          </td>
-                          <td className="py-4 px-6 text-right">
-                            {item.zeroedOut ? (
-                              <span className="px-2.5 py-1 bg-red-100 text-red-700 text-[10px] font-bold rounded-full uppercase tracking-wider border border-red-200">
-                                Zeroed Out
-                              </span>
-                            ) : (
-                              <span className="px-2.5 py-1 bg-brand-blue-50 text-brand-blue text-[10px] font-bold rounded-full uppercase tracking-wider border border-brand-blue-50">
-                                Claimed
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              )}
+              {claimStatus.type === 'success' && (
+                <div className="bg-[#EFF0F4] rounded-2xl p-6 flex flex-col items-center text-center gap-3 border border-[#C7EF66]/30">
+                  <div className="w-12 h-12 rounded-full bg-[#C7EF66] text-[#11358B] flex items-center justify-center shadow-sm">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-extrabold text-[#11358B]">+{claimStatus.pointsAdded} Points!</h3>
+                    <p className="text-sm text-[#11358B]/70 mt-1 max-w-sm font-medium">{claimStatus.message}</p>
+                  </div>
+                  <button onClick={() => setClaimStatus({ type: 'idle' })} className="mt-1 px-6 py-3 min-h-[44px] bg-[#11358B] text-white rounded-xl text-sm font-bold cursor-pointer">
+                    Dismiss
+                  </button>
                 </div>
+              )}
+              {claimStatus.type === 'error' && (
+                <div className="bg-rose-50 rounded-2xl p-6 flex flex-col items-center text-center gap-3 border border-rose-100">
+                  <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center">
+                    <AlertCircle className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-extrabold text-rose-900">QR Code Invalid</h3>
+                    <p className="text-sm text-rose-700 mt-1 max-w-sm font-medium">{claimStatus.message}</p>
+                  </div>
+                  <button onClick={() => setClaimStatus({ type: 'idle' })} className="mt-1 px-6 py-3 min-h-[44px] bg-rose-600 text-white rounded-xl text-sm font-bold cursor-pointer">
+                    Try Another
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.15 }}
+          className="bg-white rounded-[24px] shadow-sm border border-gray-200 flex-1 flex flex-col overflow-hidden"
+        >
+          {isLoadingHistory ? (
+            <div className="p-12 flex flex-col items-center justify-center text-center gap-3 flex-1">
+              <div className="w-8 h-8 border-3 border-[#6192FC] border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-xs text-[#11358B] font-medium">Loading records...</p>
+            </div>
+          ) : historyError ? (
+            <div className="m-6 p-4 rounded-2xl text-xs text-[#11358B] flex items-center gap-2 font-medium bg-[#EFF0F4]">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+              <span>{historyError}</span>
+            </div>
+          ) : history.length === 0 ? (
+            <div className="p-12 flex flex-col items-center justify-center text-center gap-3 flex-1">
+              <div className="p-4 bg-[#EFF0F4] text-[#11358B] rounded-full mb-2">
+                <Coins className="w-8 h-8" />
               </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <h4 className="font-extrabold text-[#11358B] text-sm">No Transactions Yet</h4>
+              <p className="text-xs text-gray-400 max-w-xs font-medium">
+                Scan an active QR code to see your reward history appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="flex-1 w-full bg-white md:rounded-[24px]">
+              <div className="hidden md:grid grid-cols-[minmax(0,4fr)_minmax(0,2fr)_minmax(0,2fr)_minmax(0,2fr)] border-b border-gray-300 text-[#11358B] text-xs font-bold uppercase tracking-widest bg-[#F8FAFC] divide-x divide-gray-300 rounded-t-[24px]">
+                <div className="px-6 py-4">Transaction</div>
+                <div className="px-6 py-4">Date</div>
+                <div className="px-6 py-4 text-right">Points</div>
+                <div className="px-6 py-4 text-right">Status</div>
+              </div>
+              
+              <div className="flex flex-col divide-y divide-gray-300">
+                {[...history].sort((a, b) => {
+                  if (a.zeroedOut !== b.zeroedOut) {
+                    return a.zeroedOut ? 1 : -1;
+                  }
+                  const dateA = a.claimedAt ? new Date(a.claimedAt).getTime() : 0;
+                  const dateB = b.claimedAt ? new Date(b.claimedAt).getTime() : 0;
+                  return dateB - dateA;
+                }).map((item, idx) => (
+                  <div key={item.uid || idx} className={`transition-colors flex flex-col md:grid md:grid-cols-[minmax(0,4fr)_minmax(0,2fr)_minmax(0,2fr)_minmax(0,2fr)] md:items-stretch md:divide-x md:divide-gray-300 ${item.zeroedOut ? 'bg-red-50/10' : 'hover:bg-[#F8FAFC]/60'}`}>
+                    
+                    {/* Top Row on Mobile, Column 1 on Desktop */}
+                    <div className="flex items-start justify-between md:justify-start w-full md:w-auto p-4 md:px-6 md:py-4 md:items-center">
+                      <div className="flex items-center gap-3 md:gap-4">
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-[12px] bg-[#11358B] text-white flex items-center justify-center shrink-0 shadow-sm">
+                          <QrCode className="w-4 h-4 md:w-5 md:h-5" />
+                        </div>
+                        <div className="flex flex-col">
+                          <p className="font-extrabold text-[#11358B] text-sm md:text-base leading-tight">LOT {String(item.lotNumber || 0).padStart(3, '0')}</p>
+                          <p className="font-mono text-gray-500 text-xs mt-0.5">{item.uid ? item.uid.slice(0, 8) + '...' : 'UNKNOWN'}</p>
+                        </div>
+                      </div>
+                      
+                      {/* Points + Status (Mobile Top Right) */}
+                      <div className="flex flex-col items-end md:hidden shrink-0">
+                        <span className={`font-black text-lg ${item.zeroedOut ? 'text-gray-400 line-through' : 'text-[#6192FC]'}`}>
+                          +{item.points}
+                        </span>
+                        {item.zeroedOut ? (
+                           <span className="mt-1 text-[10px] font-bold text-rose-500 uppercase tracking-wider">Withdrawn</span>
+                        ) : (
+                           <span className="mt-1 text-[10px] font-bold text-[#6B8500] uppercase tracking-wider flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Active</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Middle Row on Mobile, Column 2 on Desktop */}
+                    <div className="text-[#11358B] flex md:flex-col items-center md:items-start justify-between md:justify-center text-sm ml-[52px] md:ml-0 mt-1 md:mt-0 px-4 pb-4 md:px-6 md:py-4">
+                      <span className="font-bold md:font-extrabold text-gray-700 md:text-[#11358B]">{item.claimedAt ? new Date(item.claimedAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently'}</span>
+                      <span className="text-gray-500 text-xs font-medium flex items-center gap-1.5 md:mt-1"><Clock className="w-3.5 h-3.5" /> {item.claimedAt ? new Date(item.claimedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                    </div>
+
+                    {/* Desktop Columns 3 & 4 */}
+                    <div className="hidden md:flex justify-end items-center font-black text-lg px-6 py-4">
+                      <span className={item.zeroedOut ? 'text-gray-400 line-through' : 'text-[#6192FC]'}>
+                        +{item.points}
+                      </span>
+                    </div>
+                    <div className="hidden md:flex justify-end items-center px-6 py-4">
+                      {item.zeroedOut ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-50 text-rose-600 border border-rose-100">
+                          Withdrawn
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#f4fce0] text-[#11358B] border border-[#e5f5b5]">
+                          <CheckCircle2 className="w-4 h-4" />
+                          Active
+                        </span>
+                      )}
+                    </div>
+
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </motion.div>
+      </div>
 
       <QrScannerModal
         isOpen={isScannerOpen}

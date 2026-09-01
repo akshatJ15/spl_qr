@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { apiUrl, getApiBaseUrl, fetchWithTimeout } from '../utils/api';
 import { 
@@ -20,7 +21,9 @@ import {
   PieChart as PieChartIcon,
   Download,
   Box,
-  LayoutDashboard
+  LayoutDashboard,
+  QrCode,
+  Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
@@ -45,7 +48,7 @@ export default function AdminDashboard() {
   const [actionSuccessMessage, setActionSuccessMessage] = useState(null);
 
   // New View states for User Detail History
-  const [activeTab, setActiveTab] = useState('analytics'); // 'analytics', 'generator', 'ledger', 'lots', 'export'
+  const [activeTab, setActiveTab] = useState('ledger'); // 'ledger', 'generator', 'lots'
   const [activeView, setActiveView] = useState('ledger'); // 'ledger' or 'userDetail' for ledger tab
   const [selectedUser, setSelectedUser] = useState(null);
   const [userHistory, setUserHistory] = useState([]);
@@ -63,8 +66,8 @@ export default function AdminDashboard() {
   const [exportEndDate, setExportEndDate] = useState('');
   const [exportLoading, setExportLoading] = useState(false);
 
-  // Custom confirmation modal state for zeroing out points
-  const [resetConfirmation, setResetConfirmation] = useState(null);
+  // Inline confirmation state for zeroing out points
+  const [confirmZeroOutPhone, setConfirmZeroOutPhone] = useState(null);
 
   // Diagnostic Logs state and panel visibility state
   const [diagnosticLogs, setDiagnosticLogs] = useState([]);
@@ -214,15 +217,51 @@ export default function AdminDashboard() {
         ...rows.map(row => headers.map(header => `"${(row[header] || '').toString().replace(/"/g, '""')}"`).join(','))
       ].join('\n');
       
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `qrs_export_${new Date().getTime()}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      const fileName = `qrs_export_${new Date().getTime()}.csv`;
+      
+      try {
+        const { Capacitor } = await import('@capacitor/core');
+        if (Capacitor.isNativePlatform()) {
+          const { Filesystem, Directory } = await import('@capacitor/filesystem');
+          const { Share } = await import('@capacitor/share');
+          
+          const savedFile = await Filesystem.writeFile({
+            path: fileName,
+            data: csvContent,
+            directory: Directory.Cache,
+            encoding: 'utf8'
+          });
+          
+          await Share.share({
+            title: 'Exported QR CSV',
+            text: 'Here is the exported CSV file.',
+            url: savedFile.uri,
+            dialogTitle: 'Share CSV'
+          });
+        } else {
+          // Web fallback
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.setAttribute('href', url);
+          link.setAttribute('download', fileName);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }
+      } catch (nativeErr) {
+        console.warn('Native CSV export failed, falling back to web.', nativeErr);
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', fileName);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
       
       addLog('success', `CSV Export generated successfully with ${rows.length} rows.`);
       setActionSuccessMessage('CSV downloaded successfully.');
@@ -356,27 +395,10 @@ export default function AdminDashboard() {
     }
   };
 
-  // 3a. Initiate Reset Points Dialog
-  const initiateResetPoints = (phone, name) => {
-    addLog('action', `Click detected. Opening on-screen dynamic confirmation dialog for customer "${name}" (${phone})`);
-    setResetConfirmation({ phone, name });
-  };
-
-  // 3b. Cancel Reset action
-  const cancelResetPoints = () => {
-    if (resetConfirmation) {
-      addLog('action', `Payout canceled by Administrator: points reset for "${resetConfirmation.name}" aborted.`);
-    }
-    setResetConfirmation(null);
-  };
-
-  // 3c. Confirm points reset execution
-  const executeResetPoints = async () => {
-    if (!resetConfirmation) return;
-    const { phone, name } = resetConfirmation;
-    
-    addLog('action', `Confirmed payout zero-out inside UI dialog. Sending execution command to backend database proxy for "${name}" (${phone})`);
-    setResetConfirmation(null);
+  // 3. Confirm points reset execution (Inline)
+  const executeResetPoints = async (phone, name) => {
+    addLog('action', `Confirmed payout zero-out inline. Sending execution command to backend database proxy for "${name}" (${phone})`);
+    setConfirmZeroOutPhone(null);
     setError(null);
     
     try {
@@ -430,7 +452,7 @@ export default function AdminDashboard() {
         const { Share } = await import('@capacitor/share');
         const html2canvas = (await import('html2canvas')).default;
         
-        const printArea = document.querySelector('.print-area') || document.body;
+        const printArea = document.querySelector('#printable-grid-frame') || document.body;
         addLog('action', 'Generating QR grid image for sharing...');
         
         const canvas = await html2canvas(printArea, {
@@ -556,218 +578,191 @@ export default function AdminDashboard() {
       </AnimatePresence>
 
       {/* Top Header & Navigation */}
-      <div className="print:hidden bg-white border border-gray-200 rounded-2xl shadow-sm p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0">
-          <button onClick={() => setActiveTab('analytics')} className={`px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all active:scale-95 ${activeTab === 'analytics' ? 'bg-brand-blue text-white shadow-md' : 'bg-gray-50 text-brand-charcoal hover:bg-gray-100 border border-gray-200'}`}>
-            <LayoutDashboard className="w-4 h-4" /> Dashboard
-          </button>
-          <button onClick={() => setActiveTab('lots')} className={`px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all active:scale-95 ${activeTab === 'lots' ? 'bg-brand-blue text-white shadow-md' : 'bg-gray-50 text-brand-charcoal hover:bg-gray-100 border border-gray-200'}`}>
-            <Box className="w-4 h-4" /> QR Lots
-          </button>
-          <button onClick={() => setActiveTab('generator')} className={`px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all active:scale-95 ${activeTab === 'generator' ? 'bg-brand-blue text-white shadow-md' : 'bg-gray-50 text-brand-charcoal hover:bg-gray-100 border border-gray-200'}`}>
-            <Sparkles className="w-4 h-4" /> Generator
-          </button>
-          <button onClick={() => setActiveTab('ledger')} className={`px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all active:scale-95 ${activeTab === 'ledger' ? 'bg-brand-blue text-white shadow-md' : 'bg-gray-50 text-brand-charcoal hover:bg-gray-100 border border-gray-200'}`}>
-            <Users className="w-4 h-4" /> Ledger
-          </button>
-          <button onClick={() => setActiveTab('export')} className={`px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all active:scale-95 ${activeTab === 'export' ? 'bg-brand-blue text-white shadow-md' : 'bg-gray-50 text-brand-charcoal hover:bg-gray-100 border border-gray-200'}`}>
-            <Download className="w-4 h-4" /> Export
-          </button>
-        </div>
-        <button onClick={syncGlobalData} className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-brand-charcoal rounded-xl text-sm font-bold flex items-center gap-2 transition-all active:scale-95 border border-slate-300 whitespace-nowrap shadow-sm">
-          <RefreshCw className={`w-4 h-4 ${(ledgerLoading || analyticsLoading || qrLotsLoading) ? 'animate-spin' : ''}`} />
-          Sync Data
-        </button>
-      </div>
+      {(() => {
+        const adminTabs = (
+          <div className="w-full lg:w-auto grid grid-cols-3 lg:flex gap-1 lg:gap-2 bg-slate-100 lg:bg-transparent p-1.5 lg:p-0 rounded-2xl lg:rounded-none">
+            <button onClick={() => setActiveTab('ledger')} className={`flex flex-col lg:flex-row items-center justify-center gap-1.5 lg:gap-2 px-1 py-2 lg:px-4 lg:py-2.5 rounded-xl text-[11px] sm:text-xs lg:text-sm font-bold transition-all active:scale-95 ${activeTab === 'ledger' ? 'bg-white lg:bg-[#11358B] text-[#11358B] lg:text-white shadow-sm lg:shadow-md' : 'bg-transparent text-gray-500 hover:text-[#11358B] lg:text-[#11358B] lg:hover:bg-white/40 border border-transparent'}`}>
+              <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 lg:w-4 lg:h-4" /> <span className="whitespace-nowrap">Dashboard</span>
+            </button>
+            <button onClick={() => setActiveTab('lots')} className={`flex flex-col lg:flex-row items-center justify-center gap-1.5 lg:gap-2 px-1 py-2 lg:px-4 lg:py-2.5 rounded-xl text-[11px] sm:text-xs lg:text-sm font-bold transition-all active:scale-95 ${activeTab === 'lots' ? 'bg-white lg:bg-[#11358B] text-[#11358B] lg:text-white shadow-sm lg:shadow-md' : 'bg-transparent text-gray-500 hover:text-[#11358B] lg:text-[#11358B] lg:hover:bg-white/40 border border-transparent'}`}>
+              <Box className="w-5 h-5 sm:w-6 sm:h-6 lg:w-4 lg:h-4" /> <span className="whitespace-nowrap">QR Lots</span>
+            </button>
+            <button onClick={() => setActiveTab('generator')} className={`flex flex-col lg:flex-row items-center justify-center gap-1.5 lg:gap-2 px-1 py-2 lg:px-4 lg:py-2.5 rounded-xl text-[11px] sm:text-xs lg:text-sm font-bold transition-all active:scale-95 ${activeTab === 'generator' ? 'bg-white lg:bg-[#11358B] text-[#11358B] lg:text-white shadow-sm lg:shadow-md' : 'bg-transparent text-gray-500 hover:text-[#11358B] lg:text-[#11358B] lg:hover:bg-white/40 border border-transparent'}`}>
+              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 lg:w-4 lg:h-4" /> <span className="whitespace-nowrap">Generator</span>
+            </button>
+          </div>
+        );
+
+        const portalElement = document.getElementById('admin-navbar-portal');
+
+        return (
+          <>
+            {portalElement && createPortal(adminTabs, portalElement)}
+            
+            <div className="print:hidden flex lg:hidden flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+              {adminTabs}
+            </div>
+          </>
+        );
+      })()}
 
       {/* Main Content Area */}
       <div className="relative">
         <AnimatePresence mode="wait">
 
-        {activeTab === 'analytics' && (
-          <motion.div key="analytics-tab" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="print:hidden">
-            <div className="bg-white border border-gray-100 rounded-3xl shadow-xs overflow-hidden">
-              <div className="p-6 md:p-8 border-b border-gray-50 flex items-center gap-3">
-                <div className="p-3 bg-brand-blue-50 text-brand-blue rounded-2xl"><PieChartIcon className="w-5 h-5" /></div>
-                <div>
-                  <h2 className="text-xl font-bold text-brand-charcoal tracking-tight">Analytics Overview</h2>
-                  <p className="text-xs text-gray-400 font-mono mt-0.5">Real-time system metrics</p>
-                </div>
-              </div>
-              <div className="p-6 md:p-8">
-                {analyticsLoading ? (
-                  <div className="flex justify-center p-12"><RefreshCw className="w-8 h-8 animate-spin text-brand-blue" /></div>
-                ) : analyticsData ? (
-                  <div className="space-y-8">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                        <div className="text-brand-charcoal text-xs font-bold uppercase mb-1">Generated QRs</div>
-                        <div className="text-3xl font-black text-brand-charcoal">{analyticsData.totalGenerated}</div>
-                      </div>
-                      <div className="p-5 bg-blue-50 rounded-2xl border border-blue-100">
-                        <div className="text-blue-500 text-xs font-bold uppercase mb-1">Claimed QRs</div>
-                        <div className="text-3xl font-black text-blue-800">{analyticsData.totalClaimed}</div>
-                      </div>
-                      <div className="p-5 bg-brand-blue-50 rounded-2xl border border-brand-blue-50">
-                        <div className="text-brand-blue text-xs font-bold uppercase mb-1">Active Wallet Pts</div>
-                        <div className="text-3xl font-black text-brand-blue">{analyticsData.totalActivePoints}</div>
-                      </div>
-                      <div className="p-5 bg-red-50 rounded-2xl border border-red-100">
-                        <div className="text-red-500 text-xs font-bold uppercase mb-1">Zeroed Out Pts</div>
-                        <div className="text-3xl font-black text-red-700">{analyticsData.totalZeroedPoints}</div>
-                      </div>
-                    </div>
-                    <div className="h-[350px] w-full flex items-center justify-center bg-gray-50 rounded-2xl border border-gray-100 p-4">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie data={[
-                            { name: 'Unclaimed QRs', value: Math.max(0, analyticsData.totalGenerated - analyticsData.totalClaimed), color: '#CBD5E1' },
-                            { name: 'Claimed QRs', value: analyticsData.totalClaimed, color: '#4F46E5' }
-                          ]} cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={5} dataKey="value">
-                            {[{color: '#CBD5E1'}, {color: '#4F46E5'}].map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
-                          </Pie>
-                          <RechartsTooltip />
-                          <Legend />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-sm text-brand-charcoal text-center p-8">No data available.</p>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        )}
-
         {activeTab === 'lots' && (
           <motion.div key="lots-tab" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="print:hidden">
             <div className="bg-white border border-gray-100 rounded-3xl shadow-xs overflow-hidden">
               <div className="p-6 md:p-8 border-b border-gray-50 flex items-center gap-3">
-                <div className="p-3 bg-fuchsia-50 text-fuchsia-600 rounded-2xl"><Box className="w-5 h-5" /></div>
+                <div className="p-3 bg-brand-blue-50 text-brand-blue rounded-2xl"><Box className="w-5 h-5" /></div>
                 <div>
                   <h2 className="text-xl font-bold text-brand-charcoal tracking-tight">QR Lot Registry</h2>
                   <p className="text-xs text-gray-400 font-mono mt-0.5">Aggregate view by batch generation</p>
                 </div>
               </div>
               {qrLotsLoading ? (
-                <div className="flex justify-center p-12"><RefreshCw className="w-8 h-8 animate-spin text-fuchsia-500" /></div>
+                <div className="flex justify-center p-12"><RefreshCw className="w-8 h-8 animate-spin text-brand-blue" /></div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-gray-200 bg-gray-50 text-brand-charcoal text-[10px] font-bold uppercase tracking-widest">
-                        <th className="py-3 px-6">Lot No.</th>
-                        <th className="py-3 px-6">Total QRs</th>
-                        <th className="py-3 px-6">Claimed QRs</th>
-                        <th className="py-3 px-6">Claim Rate</th>
-                        <th className="py-3 px-6 text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {qrLotsData.map(lot => (
-                        <React.Fragment key={lot.lotNumber}>
-                          <tr className="hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => setExpandedLot(expandedLot === lot.lotNumber ? null : lot.lotNumber)}>
-                            <td className="py-4 px-6 font-black text-brand-charcoal font-mono text-sm">LOT {String(lot.lotNumber).padStart(3, '0')}</td>
-                            <td className="py-4 px-6 text-brand-charcoal font-bold text-sm">{lot.totalTokens}</td>
-                            <td className="py-4 px-6 text-brand-blue font-black text-sm">{lot.claimedTokens}</td>
-                            <td className="py-4 px-6 text-brand-charcoal">
-                              <div className="w-full bg-gray-200 rounded-full h-2 max-w-[120px] mt-0.5 overflow-hidden">
-                                <div className="bg-brand-blue h-2 rounded-full" style={{ width: `${lot.totalTokens > 0 ? (lot.claimedTokens / lot.totalTokens) * 100 : 0}%` }}></div>
+                <div className="flex-1 w-full bg-white md:rounded-b-[24px]">
+                  {/* Desktop Header */}
+                  <div className="hidden md:grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)_minmax(0,3fr)_minmax(0,2fr)] border-b border-t border-gray-300 text-[#11358B] text-xs font-bold uppercase tracking-widest bg-[#F8FAFC] divide-x divide-gray-300">
+                    <div className="px-6 py-4">Lot No.</div>
+                    <div className="px-6 py-4">Total QRs</div>
+                    <div className="px-6 py-4">Claimed QRs</div>
+                    <div className="px-6 py-4">Claim Rate</div>
+                    <div className="px-6 py-4 text-right">Action</div>
+                  </div>
+
+                  {/* Grid Body */}
+                  <div className="flex flex-col divide-y divide-gray-300 bg-white md:rounded-b-[24px]">
+                    {qrLotsData.map(lot => (
+                      <React.Fragment key={lot.lotNumber}>
+                        <div 
+                          className="hover:bg-[#F8FAFC]/60 cursor-pointer transition-colors flex flex-col md:grid md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)_minmax(0,3fr)_minmax(0,2fr)] md:items-stretch md:divide-x md:divide-gray-300"
+                          onClick={() => setExpandedLot(expandedLot === lot.lotNumber ? null : lot.lotNumber)}
+                        >
+                          {/* Mobile Layout / Col 1 */}
+                          <div className="flex items-center justify-between p-4 md:px-6 md:py-4">
+                            <div className="flex items-center gap-3 md:gap-4">
+                              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-[#11358B] text-white flex items-center justify-center shrink-0 shadow-sm">
+                                <QrCode className="w-4 h-4 md:w-5 md:h-5" />
                               </div>
-                            </td>
-                            <td className="py-4 px-6 text-right">
-                              <span className="text-xs font-bold text-brand-blue bg-brand-blue-50 px-3 py-1.5 rounded-lg">{expandedLot === lot.lotNumber ? 'Hide' : 'View Scans'}</span>
-                            </td>
-                          </tr>
-                          {expandedLot === lot.lotNumber && (
-                            <tr>
-                              <td colSpan={5} className="bg-slate-50 p-0 border-b border-gray-200">
-                                <div className="p-6 border-l-4 border-brand-blue max-h-[400px] overflow-y-auto">
-                                  {lot.tokens.filter(t => t.used).length === 0 ? (
-                                    <div className="text-center p-6 bg-white rounded-xl border border-dashed border-gray-200">
-                                      <p className="text-sm font-semibold text-brand-charcoal">No QRs from this lot have been scanned yet.</p>
-                                    </div>
-                                  ) : (
-                                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-                                      <table className="w-full text-sm text-left">
-                                        <thead>
-                                          <tr className="bg-gray-50 text-gray-400 font-bold text-[10px] uppercase tracking-wider border-b border-gray-100">
-                                            <th className="py-2.5 px-4">User</th>
-                                            <th className="py-2.5 px-4">Phone</th>
-                                            <th className="py-2.5 px-4">Points</th>
-                                            <th className="py-2.5 px-4">Date Scanned</th>
-                                          </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-50">
-                                          {lot.tokens.filter(t => t.used).map((t, idx) => (
-                                            <tr key={idx} className="hover:bg-gray-50 transition-colors">
-                                              <td className="py-3 px-4 font-bold text-brand-charcoal">{t.claimantName}</td>
-                                              <td className="py-3 px-4 text-brand-charcoal font-mono text-xs">{t.claimedBy}</td>
-                                              <td className="py-3 px-4 text-brand-blue font-black">+{t.points}</td>
-                                              <td className="py-3 px-4 text-gray-400 text-xs">{t.claimedAt ? new Date(t.claimedAt).toLocaleString('en-IN') : ''}</td>
-                                            </tr>
-                                          ))}
-                                        </tbody>
-                                      </table>
-                                    </div>
-                                  )}
+                              <p className="font-extrabold text-[#11358B] text-sm md:text-base leading-tight">
+                                LOT {String(lot.lotNumber).padStart(3, '0')}
+                              </p>
+                            </div>
+                            {/* Action on Mobile */}
+                            <div className="md:hidden flex items-center shrink-0">
+                              <span className="whitespace-nowrap text-xs font-bold text-[#11358B] bg-[#C7EF66] hover:bg-[#11358B] hover:text-[#C7EF66] px-4 py-2 min-h-[44px] rounded-xl flex items-center justify-center cursor-pointer shadow-sm transition-colors">
+                                {expandedLot === lot.lotNumber ? 'Hide' : 'View Scans'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Mobile Stats / Cols 2, 3, 4 */}
+                          <div className="grid grid-cols-2 gap-4 p-4 border-t border-gray-100 md:hidden bg-gray-50/50">
+                            <div>
+                              <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">Total QRs</p>
+                              <p className="font-extrabold text-[#11358B] text-lg">{lot.totalTokens}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] uppercase font-bold text-gray-400 mb-1">Claimed QRs</p>
+                              <p className="font-extrabold text-[#6192FC] text-lg">{lot.claimedTokens}</p>
+                            </div>
+                            <div className="col-span-2">
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="font-bold text-gray-500 uppercase text-[10px]">Claim Rate</span>
+                                <span className="font-extrabold text-[#11358B]">{lot.totalTokens > 0 ? Math.round((lot.claimedTokens / lot.totalTokens) * 100) : 0}%</span>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden shadow-inner">
+                                <div className="bg-[#6192FC] h-2 rounded-full" style={{ width: `${lot.totalTokens > 0 ? (lot.claimedTokens / lot.totalTokens) * 100 : 0}%` }}></div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Desktop Cols 2, 3, 4, 5 */}
+                          <div className="hidden md:flex items-center px-6 py-4 font-extrabold text-base text-[#11358B]">{lot.totalTokens}</div>
+                          <div className="hidden md:flex items-center px-6 py-4 font-extrabold text-base text-[#6192FC]">{lot.claimedTokens}</div>
+                          <div className="hidden md:flex flex-col justify-center px-6 py-4">
+                            <div className="flex justify-between text-xs mb-1.5">
+                              <span className="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Progress</span>
+                              <span className="font-extrabold text-[#11358B]">{lot.totalTokens > 0 ? Math.round((lot.claimedTokens / lot.totalTokens) * 100) : 0}%</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden shadow-inner">
+                              <div className="bg-[#6192FC] h-2 rounded-full transition-all duration-500" style={{ width: `${lot.totalTokens > 0 ? (lot.claimedTokens / lot.totalTokens) * 100 : 0}%` }}></div>
+                            </div>
+                          </div>
+                          <div className="hidden md:flex items-center justify-end px-6 py-4">
+                            <span className="whitespace-nowrap text-xs font-bold text-[#11358B] bg-[#C7EF66] hover:bg-[#11358B] hover:text-[#C7EF66] px-5 py-2.5 min-h-[44px] rounded-xl flex items-center justify-center cursor-pointer shadow-sm transition-colors">
+                              {expandedLot === lot.lotNumber ? 'Hide' : 'View Scans'}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Expanded Scans Grid */}
+                        {expandedLot === lot.lotNumber && (
+                          <div className="bg-slate-50 border-b border-gray-200">
+                            <div className="p-4 md:p-6 border-l-4 border-[#6192FC] max-h-[400px] overflow-y-auto">
+                              {lot.tokens.filter(t => t.used).length === 0 ? (
+                                <div className="text-center p-8 bg-white rounded-2xl border border-dashed border-gray-200">
+                                  <p className="text-sm font-bold text-[#11358B]">No QRs from this lot have been scanned yet.</p>
                                 </div>
-                              </td>
-                            </tr>
-                          )}
-                        </React.Fragment>
-                      ))}
-                      {qrLotsData.length === 0 && !qrLotsLoading && (
-                        <tr>
-                          <td colSpan={5} className="text-center py-12 text-brand-charcoal font-medium">No QR Lots generated yet.</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                              ) : (
+                                <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
+                                  {/* Inner Desktop Header */}
+                                  <div className="hidden md:grid grid-cols-[minmax(0,4fr)_minmax(0,3fr)_minmax(0,2fr)] border-b border-gray-300 text-[#11358B] text-xs font-bold uppercase tracking-widest bg-[#F8FAFC] divide-x divide-gray-300">
+                                    <div className="px-6 py-4">User</div>
+                                    <div className="px-6 py-4">Date Scanned</div>
+                                    <div className="px-6 py-4 text-right">Points</div>
+                                  </div>
+                                  
+                                  <div className="flex flex-col divide-y divide-gray-300">
+                                    {lot.tokens.filter(t => t.used).map((t, idx) => (
+                                      <div key={idx} className="relative hover:bg-[#F8FAFC]/60 transition-colors flex flex-col md:grid md:grid-cols-[minmax(0,4fr)_minmax(0,3fr)_minmax(0,2fr)] md:items-stretch md:divide-x md:divide-gray-300">
+                                        {/* Col 1 */}
+                                        <div className="flex items-center gap-3 md:gap-4 p-4 md:px-6 md:py-4">
+                                          <div className="w-10 h-10 md:w-12 md:h-12 rounded-[12px] bg-[#EFF0F4] text-[#11358B] flex items-center justify-center shrink-0 shadow-sm font-black text-lg">
+                                            {t.claimantName ? t.claimantName.charAt(0).toUpperCase() : '?'}
+                                          </div>
+                                          <div className="flex flex-col">
+                                            <p className="font-extrabold text-[#11358B] text-sm md:text-base leading-tight">{t.claimantName}</p>
+                                            <p className="font-mono text-gray-500 text-xs mt-0.5">{t.claimedBy}</p>
+                                          </div>
+                                        </div>
+                                        {/* Col 2 */}
+                                        <div className="text-[#11358B] flex md:flex-col items-center md:items-start justify-between md:justify-center text-sm ml-[52px] md:ml-0 mt-1 md:mt-0 px-4 pb-4 md:px-6 md:py-4">
+                                          <span className="font-bold md:font-extrabold text-gray-700 md:text-[#11358B]">{t.claimedAt ? new Date(t.claimedAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}</span>
+                                          <span className="text-gray-500 text-xs font-medium flex items-center gap-1.5 md:mt-1"><Clock className="w-3.5 h-3.5" /> {t.claimedAt ? new Date(t.claimedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                                        </div>
+                                        {/* Col 3 */}
+                                        <div className="hidden md:flex justify-end items-center font-black text-lg px-6 py-4">
+                                          <span className="text-[#6192FC]">+{t.points}</span>
+                                        </div>
+                                        {/* Mobile Points */}
+                                        <div className="absolute right-4 top-4 md:hidden">
+                                          <span className="font-black text-lg text-[#6192FC]">+{t.points}</span>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </React.Fragment>
+                    ))}
+                    {qrLotsData.length === 0 && !qrLotsLoading && (
+                      <div className="text-center py-12 text-[#11358B] font-bold">No QR Lots generated yet.</div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
           </motion.div>
         )}
 
-        {activeTab === 'export' && (
-          <motion.div key="export-tab" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="print:hidden">
-            <div className="bg-white border border-gray-100 rounded-3xl shadow-xs overflow-hidden">
-              <div className="p-6 md:p-8 border-b border-gray-50 flex items-center gap-3">
-                <div className="p-3 bg-brand-blue-50 text-brand-blue rounded-2xl"><Download className="w-5 h-5" /></div>
-                <div>
-                  <h2 className="text-xl font-bold text-brand-charcoal tracking-tight">Data Export Engine</h2>
-                  <p className="text-xs text-gray-400 font-mono mt-0.5">Download full CSV reports for Excel/Sheets</p>
-                </div>
-              </div>
-              <div className="p-6 md:p-8 flex flex-col md:flex-row gap-8">
-                <form onSubmit={handleExport} className="w-full max-w-md space-y-6">
-                  <div>
-                    <label className="block text-xs font-bold text-brand-charcoal uppercase tracking-wider mb-2">Start Date (Optional)</label>
-                    <input type="date" value={exportStartDate} onChange={(e) => setExportStartDate(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-blue text-sm font-semibold text-brand-charcoal transition-all focus:bg-white" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-brand-charcoal uppercase tracking-wider mb-2">End Date (Optional)</label>
-                    <input type="date" value={exportEndDate} onChange={(e) => setExportEndDate(e.target.value)} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-blue text-sm font-semibold text-brand-charcoal transition-all focus:bg-white" />
-                  </div>
-                  <button type="submit" disabled={exportLoading} className="w-full py-4 bg-brand-blue hover:bg-brand-blue active:bg-brand-blue disabled:bg-emerald-300 text-white font-bold rounded-xl transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm">
-                    {exportLoading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
-                    Download CSV Report
-                  </button>
-                  <p className="text-[10px] text-gray-400 mt-2 font-medium">Export includes QR Lot, Claimant details, Scan Dates, and Zeroed Out statuses.</p>
-                </form>
-                <div className="hidden md:flex flex-col items-center justify-center flex-1 bg-brand-blue-50/50 rounded-2xl border border-brand-blue-50 border-dashed p-8 text-center">
-                  <div className="w-20 h-20 bg-brand-blue-50 text-brand-blue rounded-full flex items-center justify-center mb-4">
-                    <Download className="w-10 h-10" />
-                  </div>
-                  <h4 className="text-emerald-900 font-bold text-lg mb-2">Secure Export</h4>
-                  <p className="text-brand-blue text-sm max-w-[250px]">Filter by date range to download precise subsets of your QR ledger, or leave blank to export the entire history.</p>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
+
 
         {activeTab === 'generator' && (
           <motion.div key="generator-tab" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
@@ -775,26 +770,38 @@ export default function AdminDashboard() {
       <div className="print:hidden w-full bg-white border border-gray-100 rounded-3xl shadow-xs overflow-hidden">
         <div className="p-6 md:p-8 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
+            <div className="p-3 bg-brand-blue-50 text-brand-blue rounded-2xl">
               <Sparkles className="w-5 h-5 animate-spin-slow" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-brand-charcoal tracking-tight">QR Incentive Generator</h2>
-              <p className="text-xs text-gray-400 font-mono mt-0.5">Section 1: Interactive Token Provisioning</p>
             </div>
           </div>
-          <span className="self-start sm:self-center px-3 py-1 bg-blue-50 text-blue-700 border border-blue-100 font-mono text-[10px] font-bold uppercase rounded-full">
-            Localhost & Sandbox Dynamic Ready
-          </span>
+        </div>
+
+        <div className="p-4 md:p-6 bg-slate-50 border-b border-gray-100 flex flex-col md:flex-row md:items-center gap-3">
+           <label htmlFor="base-url-input-box" className="text-xs font-bold text-gray-500 uppercase tracking-wider shrink-0">
+             Scan Base URL
+           </label>
+           <input
+             id="base-url-input-box"
+             type="text"
+             required
+             disabled={loading}
+             value={qrBaseUrl}
+             onChange={(e) => setQrBaseUrl(e.target.value)}
+             className="w-full md:max-w-md pl-4 pr-4 min-h-[44px] bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#11358B] transition-all font-mono text-xs text-[#11358B] shadow-sm font-bold"
+             placeholder="e.g. http://192.168.1.15:3000"
+           />
         </div>
 
         <div className="p-6 md:p-8 bg-slate-50/40">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
             
             {/* Input form panel code */}
-            <form onSubmit={handleBulkGenerate} className="md:col-span-5 space-y-5 bg-white p-6 border border-gray-100 rounded-2xl">
+            <form onSubmit={handleBulkGenerate} className="space-y-6 bg-white p-6 md:p-8 border border-gray-100 rounded-3xl shadow-sm">
               <div>
-                <label htmlFor="points-input-box" className="block text-xs font-bold text-brand-charcoal uppercase tracking-wider mb-2">
+                <label htmlFor="points-input-box" className="block text-xs font-bold text-[#11358B] uppercase tracking-wider mb-2">
                   Points per QR Code
                 </label>
                 <div className="relative">
@@ -806,23 +813,26 @@ export default function AdminDashboard() {
                     disabled={loading}
                     value={pointsToAward}
                     onChange={(e) => {
-                      console.log('[INPUT] pointsToAward changed to:', e.target.value);
-                      setPointsToAward(Math.max(1, parseInt(e.target.value) || 1));
+                      const val = e.target.value;
+                      if (val === '0') {
+                        setError('Points cannot be 0');
+                        setPointsToAward('');
+                      } else {
+                        setPointsToAward(val === '' ? '' : parseInt(val, 10));
+                        setError(null);
+                      }
                     }}
-                    className="w-full pl-4 pr-16 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-bold text-brand-charcoal text-base"
+                    className="w-full pl-4 pr-16 min-h-[48px] bg-[#F8FAFC] border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#11358B] transition-all font-black text-[#11358B] text-lg md:text-xl shadow-inner"
                     placeholder="e.g. 15"
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-bold font-mono">
                     Points
                   </span>
                 </div>
-                <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">
-                  The reward value added to a user's wallet when they scan this QR.
-                </p>
               </div>
 
               <div>
-                <label htmlFor="quantity-input-box" className="block text-xs font-bold text-brand-charcoal uppercase tracking-wider mb-2">
+                <label htmlFor="quantity-input-box" className="block text-xs font-bold text-[#11358B] uppercase tracking-wider mb-2">
                   Quantity (Max 50)
                 </label>
                 <div className="relative">
@@ -835,64 +845,52 @@ export default function AdminDashboard() {
                     disabled={loading}
                     value={quantity}
                     onChange={(e) => {
-                      console.log('[INPUT] quantity changed to:', e.target.value);
-                      setQuantity(Math.min(50, Math.max(1, parseInt(e.target.value) || 1)));
+                      const val = e.target.value;
+                      if (val === '0') {
+                        setError('Quantity cannot be 0');
+                        setQuantity('');
+                      } else if (val !== '') {
+                        const num = parseInt(val, 10);
+                        if (num > 50) {
+                           setQuantity(50);
+                           setError('Maximum quantity is 50');
+                        } else {
+                           setQuantity(num);
+                           setError(null);
+                        }
+                      } else {
+                        setQuantity('');
+                        setError(null);
+                      }
                     }}
-                    className="w-full pl-4 pr-16 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-bold text-brand-charcoal text-base"
+                    className="w-full pl-4 pr-16 min-h-[48px] bg-[#F8FAFC] border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#11358B] transition-all font-black text-[#11358B] text-lg md:text-xl shadow-inner"
                     placeholder="e.g. 10"
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-bold font-mono">
                     Qty
                   </span>
                 </div>
-                <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">
-                  We enforce a strict hard limit of 50 codes per print batch for optimal system performance.
-                </p>
-              </div>
-
-              <div>
-                <label htmlFor="base-url-input-box" className="block text-xs font-bold text-brand-charcoal uppercase tracking-wider mb-2">
-                  Scan Base URL (Domain)
-                </label>
-                <div className="relative">
-                  <input
-                    id="base-url-input-box"
-                    type="text"
-                    required
-                    disabled={loading}
-                    value={qrBaseUrl}
-                    onChange={(e) => {
-                      console.log('[INPUT] qrBaseUrl changed to:', e.target.value);
-                      setQrBaseUrl(e.target.value);
-                    }}
-                    className="w-full pl-4 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono text-xs text-brand-charcoal"
-                    placeholder="e.g. http://192.168.1.15:3000"
-                  />
-                </div>
-                <p className="text-[10px] text-gray-400 mt-2 leading-relaxed">
-                  Defaults to current page. Override with your computer's local Wi-Fi IP (e.g. <code>http://192.168.1.15:3000</code>) for phone testing on Localhost or your custom Render URL!
-                </p>
               </div>
 
               <button
                 id="generate-qr-submit-btn"
                 type="submit"
                 disabled={loading}
-                className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:bg-blue-300 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                className="w-full py-4 min-h-[56px] bg-[#C7EF66] hover:bg-[#11358B] hover:text-[#C7EF66] text-[#11358B] font-black rounded-2xl text-sm md:text-base transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 disabled:opacity-50"
               >
                 {loading ? (
                   <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    Connecting backend...
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                    Generating...
                   </>
                 ) : (
-                  'Generate QR Codes'
+                  'Generate Codes'
                 )}
               </button>
             </form>
 
             {/* Generated display results panel */}
-            <div className="md:col-span-7 flex flex-col items-center justify-center min-h-[200px]">
+            <div className="flex flex-col items-center justify-center min-h-[200px]">
               {generatedQrs.length > 0 ? (
                 <div className="w-full flex flex-col items-center">
                   
@@ -936,7 +934,7 @@ export default function AdminDashboard() {
                                 window.history.pushState({}, '', `/claim?token=${uid}`);
                                 window.dispatchEvent(new Event('popstate'));
                               }}
-                              className="mt-2 w-full py-1 text-[9px] font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-md transition-colors font-sans"
+                              className="mt-2 w-full py-1 text-[9px] font-bold text-white bg-brand-blue hover:bg-brand-blue/90 rounded-md transition-colors font-sans"
                             >
                               Simulate Claim
                             </button>
@@ -994,8 +992,8 @@ export default function AdminDashboard() {
               const claimUrl = `${qrBaseUrl}/claim?token=${uid}`;
               return (
                 <div key={uid} className="no-print-border w-[220px] bg-white rounded-[20px] flex flex-col overflow-hidden relative m-2" style={{ border: '2px dashed #CBD5E1' }}>
-                  <div className="w-full bg-[#4045CB] text-white py-2 flex items-center justify-center">
-                    <span className="font-black tracking-widest text-[10px] uppercase">My Scan Rewards</span>
+                  <div className="w-full bg-[#0078D7] text-white py-2 flex items-center justify-center">
+                    <span className="font-black tracking-widest text-[10px] uppercase">Quick Scan Rewards</span>
                   </div>
                   <div className="p-3 flex flex-col items-center bg-white">
                     <div className="p-1 border border-gray-100 rounded-xl mb-2">
@@ -1005,7 +1003,7 @@ export default function AdminDashboard() {
                         level="H"
                         includeMargin={false}
                         imageSettings={{
-                          src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%234045CB'/%3E%3Ctext x='50' y='70' font-family='sans-serif' font-size='60' font-weight='900' fill='white' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E",
+                          src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230078D7'/%3E%3Ctext x='50' y='70' font-family='sans-serif' font-size='60' font-weight='900' fill='white' text-anchor='middle'%3EQ%3C/text%3E%3C/svg%3E",
                           height: 30,
                           width: 30,
                           excavate: true,
@@ -1040,18 +1038,82 @@ export default function AdminDashboard() {
 
       {activeTab === 'ledger' && (
       <motion.div key="ledger-tab" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-      {/* Section 2 & 3: Animated Views */}
-      <div className="relative mt-6">
-        <AnimatePresence mode="wait">
-          {activeView === 'ledger' && (
-            <motion.div 
-              key="ledger-view"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.2 }}
-              className="print:hidden w-full bg-white border border-gray-100 rounded-3xl shadow-xs overflow-hidden"
-            >
+        
+        <div className="w-full mx-auto flex flex-col gap-6 mt-6 print:hidden">
+          {/* ===== TOP ROW: CARDS & ACTIONS ===== */}
+          <div className="w-full grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            {/* Stat 1: Generated QRs */}
+            <div className="col-span-1 bg-[#F8FAFC] rounded-3xl p-4 md:p-6 flex flex-col justify-center items-start shadow-sm border border-[#EFF0F4] h-32 md:h-36">
+              <h4 className="text-[10px] md:text-xs font-bold text-gray-700 tracking-wider mb-1 md:mb-1.5 uppercase">Generated QRs</h4>
+              <p className="text-3xl md:text-4xl font-black text-gray-800">{analyticsData?.totalGenerated || 0}</p>
+            </div>
+            
+            {/* Stat 2: Claimed QRs */}
+            <div className="col-span-1 bg-[#F8FAFC] rounded-3xl p-4 md:p-6 flex flex-col justify-center items-start shadow-sm border border-[#EFF0F4] h-32 md:h-36">
+              <h4 className="text-[10px] md:text-xs font-bold text-[#11358B] tracking-wider mb-1 md:mb-1.5 uppercase">Claimed QRs</h4>
+              <p className="text-3xl md:text-4xl font-black text-[#11358B]">{analyticsData?.totalClaimed || 0}</p>
+            </div>
+
+            {/* Pie Chart */}
+            <div className="col-span-2 md:col-span-1 bg-white rounded-3xl shadow-sm border border-[#EFF0F4] overflow-hidden flex h-36">
+               <div className="flex-1 w-full flex items-center justify-between p-5 md:p-6">
+                 {/* Left: Titles & Custom Legend */}
+                 <div className="flex flex-col items-start justify-center">
+                   <div className="flex items-center gap-2 text-[#11358B] mb-3">
+                     <div className="p-2 md:p-1.5 bg-[#F8FAFC] rounded-xl md:rounded-lg"><PieChartIcon className="w-5 h-5 md:w-3.5 md:h-3.5" /></div>
+                     <h2 className="text-base md:text-sm font-bold">Claim Status</h2>
+                   </div>
+                   <div className="flex flex-col gap-2 md:gap-1.5">
+                     <div className="flex items-center gap-2">
+                       <div className="w-2.5 h-2.5 md:w-2 md:h-2 rounded-full bg-[#11358B]"></div>
+                       <span className="text-sm md:text-xs font-bold text-gray-600">Claimed: {analyticsData?.totalClaimed || 0}</span>
+                     </div>
+                     <div className="flex items-center gap-2">
+                       <div className="w-2.5 h-2.5 md:w-2 md:h-2 rounded-full bg-[#CBD5E1]"></div>
+                       <span className="text-sm md:text-xs font-bold text-gray-600">Unclaimed: {Math.max(0, (analyticsData?.totalGenerated || 0) - (analyticsData?.totalClaimed || 0))}</span>
+                     </div>
+                   </div>
+                 </div>
+                 
+                 {/* Right: Donut */}
+                 <div className="h-[90px] w-[90px] md:h-[100px] md:w-[100px] shrink-0">
+                   {analyticsLoading ? (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <RefreshCw className="w-5 h-5 animate-spin text-[#11358B]" />
+                      </div>
+                   ) : analyticsData ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={[
+                            { name: 'Unclaimed', value: Math.max(0, analyticsData.totalGenerated - analyticsData.totalClaimed), color: '#CBD5E1' },
+                            { name: 'Claimed', value: analyticsData.totalClaimed, color: '#11358B' }
+                          ]} cx="50%" cy="50%" innerRadius={32} outerRadius={46} paddingAngle={4} dataKey="value" stroke="none">
+                            {[{color: '#CBD5E1'}, {color: '#11358B'}].map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                          </Pie>
+                          <RechartsTooltip contentStyle={{ borderRadius: '12px', fontSize: '12px', fontWeight: 'bold', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                   ) : (
+                      <p className="text-xs text-gray-400 text-center mt-8">No data</p>
+                   )}
+                 </div>
+               </div>
+            </div>
+          </div>
+
+          {/* ===== BOTTOM ROW: MAIN CONTENT ===== */}
+          <div className="flex-1 w-full flex flex-col min-w-0">
+            <div className="relative">
+              <AnimatePresence mode="wait">
+                {activeView === 'ledger' && (
+                  <motion.div 
+                    key="ledger-view"
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.98 }}
+                    transition={{ duration: 0.2 }}
+                    className="w-full bg-white border border-gray-100 rounded-[24px] shadow-xs overflow-hidden"
+                  >
           <div className="p-6 md:p-8 border-b border-gray-50 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-brand-blue-50 text-brand-blue rounded-2xl">
@@ -1059,33 +1121,20 @@ export default function AdminDashboard() {
             </div>
             <div>
               <h2 className="text-xl font-bold text-brand-charcoal tracking-tight">Beneficiary Ledger</h2>
-              <p className="text-xs text-gray-400 font-mono mt-0.5">Section 2: Active Clients & Accumulated Balances</p>
             </div>
           </div>
           
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Real-time Refresh Ledger Above the Table */}
-            <button
-              onClick={fetchLedger}
-              className="px-4 py-2.5 bg-brand-blue-50 hover:bg-brand-blue-50 text-brand-blue font-bold text-xs rounded-xl flex items-center gap-2 transition-all active:scale-95 cursor-pointer border border-brand-blue-50/50"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${ledgerLoading ? 'animate-spin' : ''}`} />
-              Refresh Ledger
-            </button>
-
-            {/* Real-time search filter */}
-            <div className="relative max-w-xs w-full">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                <Search className="w-4 h-4" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search by name or number..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-transparent text-xs font-semibold text-brand-charcoal transition-all"
-              />
-            </div>
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto mt-2 md:mt-0">
+            {/* Embedded Export Controls */}
+            <form onSubmit={handleExport} className="grid grid-cols-2 md:flex md:flex-row items-center gap-2 bg-gray-50 p-2 rounded-2xl border border-gray-100 w-full md:w-auto">
+              <input type="date" value={exportStartDate} onChange={(e) => setExportStartDate(e.target.value)} className="col-span-1 min-h-[44px] px-3 w-full bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#11358B] text-sm md:text-xs font-semibold text-gray-700 transition-all outline-none" title="Start Date" />
+              <span className="hidden md:inline text-gray-400 font-bold text-sm md:text-xs px-1">to</span>
+              <input type="date" value={exportEndDate} onChange={(e) => setExportEndDate(e.target.value)} className="col-span-1 min-h-[44px] px-3 w-full bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#11358B] text-sm md:text-xs font-semibold text-gray-700 transition-all outline-none" title="End Date" />
+              <button type="submit" disabled={exportLoading} className="col-span-2 md:col-span-1 min-h-[44px] px-5 bg-[#C7EF66] text-[#11358B] hover:bg-[#11358B] hover:text-[#C7EF66] font-black text-sm rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-50 cursor-pointer shadow-sm md:ml-1 w-full md:w-auto">
+                {exportLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                Export
+              </button>
+            </form>
           </div>
         </div>
 
@@ -1096,82 +1145,107 @@ export default function AdminDashboard() {
             <p className="text-sm font-semibold text-brand-charcoal mt-3 font-mono">Synchronizing ledger tables...</p>
           </div>
         ) : filteredBeneficiaries.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-gray-200 text-brand-charcoal text-xs font-medium uppercase tracking-wide">
-                  <th className="py-3 px-6 font-medium align-top">
-                    <div className="mb-2 text-[11px] font-bold">Name</div>
-                    <input
-                      type="text"
-                      placeholder="Filter by name..."
-                      value={nameFilter}
-                      onChange={(e) => setNameFilter(e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-blue text-[11px] font-semibold text-brand-charcoal normal-case shadow-sm placeholder:font-normal"
-                    />
-                  </th>
-                  <th className="py-3 px-6 font-medium align-top">
-                    <div className="mb-2 text-[11px] font-bold">Mobile Number</div>
-                    <input
-                      type="text"
-                      placeholder="Filter by phone..."
-                      value={phoneFilter}
-                      onChange={(e) => setPhoneFilter(e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-blue text-[11px] font-semibold text-brand-charcoal normal-case shadow-sm placeholder:font-normal"
-                    />
-                  </th>
-                  <th className="py-3 px-6 font-medium align-top">
-                    <div className="mb-2 text-[11px] font-bold">Total Points</div>
-                    <input
-                      type="number"
-                      placeholder="Min points..."
-                      value={minPointsFilter}
-                      onChange={(e) => setMinPointsFilter(e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="w-24 px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-blue text-[11px] font-semibold text-brand-charcoal normal-case shadow-sm placeholder:font-normal"
-                    />
-                  </th>
-                  <th className="py-3 px-6 font-medium text-right align-top">
-                    <div className="mb-2 text-[11px] font-bold">Action</div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 bg-white">
-                {filteredBeneficiaries.map((b, idx) => (
-                  <tr 
-                    key={idx} 
-                    onClick={() => fetchUserHistory(b.phone)}
-                    className="hover:bg-gray-50 transition-colors text-sm cursor-pointer"
-                  >
-                    <td className="py-4 px-6 text-brand-charcoal flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-xs font-medium text-brand-charcoal">
-                        {b.name.charAt(0).toUpperCase()}
+          <div className="flex-1 w-full bg-white md:rounded-[24px] border border-gray-200 overflow-hidden shadow-sm">
+            {/* 1. The Filter Bar */}
+            <div className="p-4 md:p-6 border-b border-gray-200 grid grid-cols-2 md:flex md:flex-row items-center gap-3 bg-[#F8FAFC]">
+              <div className="col-span-1 w-full relative">
+                <Search className="w-4 h-4 md:w-4 md:h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Filter by name..."
+                  value={nameFilter}
+                  onChange={(e) => setNameFilter(e.target.value)}
+                  className="w-full min-h-[44px] pl-9 pr-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#11358B] text-sm md:text-xs font-bold text-[#11358B] transition-all shadow-sm"
+                />
+              </div>
+              <div className="col-span-1 w-full relative">
+                <Smartphone className="w-4 h-4 md:w-4 md:h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Filter by phone..."
+                  value={phoneFilter}
+                  onChange={(e) => setPhoneFilter(e.target.value)}
+                  className="w-full min-h-[44px] pl-9 pr-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#11358B] text-sm md:text-xs font-bold text-[#11358B] transition-all shadow-sm"
+                />
+              </div>
+              <div className="col-span-2 md:col-span-1 w-full md:w-auto relative shrink-0">
+                <Coins className="w-4 h-4 md:w-4 md:h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="number"
+                  placeholder="Min points..."
+                  value={minPointsFilter}
+                  onChange={(e) => setMinPointsFilter(e.target.value)}
+                  className="w-full md:w-32 min-h-[44px] pl-9 pr-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#11358B] text-sm md:text-xs font-bold text-[#11358B] transition-all shadow-sm"
+                />
+              </div>
+            </div>
+
+            {/* 2. Desktop Header */}
+            <div className="hidden md:grid grid-cols-[minmax(0,3fr)_minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] border-b border-gray-300 text-[#11358B] text-xs font-bold uppercase tracking-widest bg-[#F8FAFC] divide-x divide-gray-300">
+              <div className="px-6 py-4">Name</div>
+              <div className="px-6 py-4">Mobile Number</div>
+              <div className="px-6 py-4">Total Points</div>
+              <div className="px-6 py-4 text-right">Action</div>
+            </div>
+
+            {/* 3. The Grid Body */}
+            <div className="flex flex-col divide-y divide-gray-300 bg-white">
+              {filteredBeneficiaries.map((b, idx) => (
+                <div 
+                  key={idx} 
+                  onClick={() => fetchUserHistory(b.phone)}
+                  className="transition-colors flex flex-col md:grid md:grid-cols-[minmax(0,3fr)_minmax(0,3fr)_minmax(0,2fr)_minmax(0,2fr)] md:items-stretch md:divide-x md:divide-gray-300 hover:bg-[#F8FAFC]/60 cursor-pointer relative"
+                >
+                  {/* Name & Points (Top on Mobile) */}
+                  <div className="flex items-start justify-between p-4 md:px-6 md:py-4">
+                    <div className="flex items-center gap-3 md:gap-4">
+                      <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-[#EFF0F4] text-[#11358B] flex items-center justify-center shrink-0 shadow-sm font-black text-lg">
+                        {b.name ? b.name.charAt(0).toUpperCase() : '?'}
                       </div>
-                      <span className="font-medium">{b.name}</span>
-                    </td>
-                    <td className="py-4 px-6 text-brand-charcoal">
-                      {b.phone}
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="font-semibold text-brand-charcoal">
-                        {b.points} <span className="text-brand-charcoal font-normal">pts</span>
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-right">
+                      <div className="flex flex-col">
+                        <p className="font-extrabold text-[#11358B] text-sm md:text-base leading-tight">{b.name}</p>
+                        <p className="md:hidden font-mono text-gray-500 text-xs mt-0.5">{b.phone}</p>
+                      </div>
+                    </div>
+                    {/* Points Mobile Inline */}
+                    <div className="md:hidden flex flex-col items-end shrink-0">
+                      <span className="font-black text-lg text-[#6192FC]">{b.points} <span className="text-xs font-bold text-gray-400 ml-0.5 uppercase">Pts</span></span>
+                    </div>
+                  </div>
+
+                  {/* Phone (Desktop) */}
+                  <div className="hidden md:flex items-center px-6 py-4 text-gray-500 font-mono text-sm">
+                    {b.phone}
+                  </div>
+
+                  {/* Points (Desktop) */}
+                  <div className="hidden md:flex items-center px-6 py-4 font-black text-lg text-[#6192FC]">
+                    {b.points}
+                  </div>
+
+                  {/* Action */}
+                  <div className="px-4 py-3 md:px-6 md:py-4 flex justify-end md:items-center bg-white md:bg-transparent border-t border-gray-200 md:border-0">
+                    {confirmZeroOutPhone === b.phone ? (
                       <button
-                        onClick={(e) => { e.stopPropagation(); initiateResetPoints(b.phone, b.name); }}
-                        className="py-1.5 px-3 bg-white hover:bg-red-50 text-red-600 border border-gray-200 rounded-lg shadow-sm transition-all active:scale-95 text-xs font-medium inline-flex items-center justify-center gap-1.5 ml-auto cursor-pointer"
+                        onClick={(e) => { e.stopPropagation(); executeResetPoints(b.phone, b.name); }}
+                        className="min-h-[44px] px-5 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-all active:scale-95 text-sm md:text-xs font-bold flex items-center justify-center gap-2 cursor-pointer md:w-auto shadow-sm"
                       >
-                        <UserMinus className="w-3.5 h-3.5" />
+                        <CheckCircle className="w-4 h-4 md:w-3.5 md:h-3.5" />
+                        Confirm Zero Out
+                      </button>
+                    ) : (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setConfirmZeroOutPhone(b.phone); }}
+                        className="min-h-[44px] px-5 bg-[#FEF2F2] hover:bg-[#FEE2E2] text-[#EF4444] rounded-xl transition-all active:scale-95 text-sm md:text-xs font-bold flex items-center justify-center gap-2 cursor-pointer md:w-auto"
+                      >
+                        <UserMinus className="w-4 h-4 md:w-3.5 md:h-3.5" />
                         Zero Out
                       </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="p-16 text-center flex flex-col items-center justify-center">
@@ -1190,14 +1264,6 @@ export default function AdminDashboard() {
             <Coins className="w-4 h-4 text-slate-400" />
             <span>Accumulation Metrics: {beneficiaries.length} total users tracked</span>
           </div>
-          <button
-            id="refresh-ledger-btn"
-            onClick={fetchLedger}
-            className="self-start sm:self-auto py-2 px-3.5 bg-slate-100 hover:bg-slate-200 hover:text-brand-charcoal transition-all active:scale-95 font-semibold text-brand-charcoal rounded-xl flex items-center justify-center gap-2.5 cursor-pointer border border-slate-200"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${ledgerLoading ? 'animate-spin' : ''}`} />
-            Refresh Ledger Data
-          </button>
         </div>
           </motion.div>
           )}
@@ -1212,33 +1278,43 @@ export default function AdminDashboard() {
               transition={{ duration: 0.2 }}
               className="print:hidden w-full bg-white border border-gray-100 rounded-3xl shadow-xs overflow-hidden"
             >
-          <div className="p-6 md:p-8 border-b border-gray-50 flex items-center gap-4">
-            <button 
-              onClick={() => setActiveView('ledger')}
-              className="p-2 hover:bg-gray-100 rounded-xl transition-all active:scale-95 cursor-pointer text-brand-charcoal"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-brand-blue-50 border-2 border-brand-blue-50 flex items-center justify-center text-lg font-bold text-brand-blue">
+          <div className="p-6 md:p-8 border-b border-gray-50 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <button 
+                onClick={() => setActiveView('ledger')}
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-gray-100 rounded-xl transition-all active:scale-95 cursor-pointer text-brand-charcoal shrink-0"
+              >
+                <ArrowLeft className="w-6 h-6 md:w-5 md:h-5" />
+              </button>
+              <div className="w-12 h-12 rounded-full bg-brand-blue-50 border-2 border-brand-blue-50 flex items-center justify-center text-lg font-bold text-brand-blue shrink-0">
                 {selectedUser.name.charAt(0).toUpperCase()}
               </div>
-              <div>
-                <h2 className="text-2xl font-bold text-brand-charcoal tracking-tight">{selectedUser.name}</h2>
-                <div className="flex items-center gap-3 text-sm text-brand-charcoal mt-1">
+              <div className="min-w-0">
+                <h2 className="text-xl md:text-2xl font-bold text-brand-charcoal tracking-tight truncate">{selectedUser.name}</h2>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-brand-charcoal mt-1">
                   <span className="flex items-center gap-1"><Smartphone className="w-4 h-4" /> {selectedUser.phone}</span>
-                  <span>•</span>
+                  <span className="hidden sm:inline">•</span>
                   <span className="font-semibold text-brand-blue">Current Balance: {selectedUser.points} pts</span>
                 </div>
               </div>
             </div>
-            <button
-              onClick={(e) => { e.stopPropagation(); initiateResetPoints(selectedUser.phone, selectedUser.name); }}
-              className="ml-auto py-2 px-4 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-sm rounded-xl transition-all active:scale-95 cursor-pointer border border-red-200/50 flex items-center gap-2"
-            >
-              <UserMinus className="w-4 h-4" />
-              Zero Out Balance
-            </button>
+            {confirmZeroOutPhone === selectedUser.phone ? (
+              <button
+                onClick={(e) => { e.stopPropagation(); executeResetPoints(selectedUser.phone, selectedUser.name); }}
+                className="sm:ml-auto min-h-[44px] px-6 bg-red-600 hover:bg-red-700 text-white font-bold text-sm md:text-xs rounded-xl transition-all active:scale-95 cursor-pointer border border-red-700 flex items-center justify-center gap-2 w-full sm:w-auto shadow-sm"
+              >
+                <CheckCircle className="w-5 h-5 md:w-4 md:h-4" />
+                Confirm Zero Out
+              </button>
+            ) : (
+              <button
+                onClick={(e) => { e.stopPropagation(); setConfirmZeroOutPhone(selectedUser.phone); }}
+                className="sm:ml-auto min-h-[44px] px-6 bg-red-50 hover:bg-red-100 text-red-700 font-bold text-sm md:text-xs rounded-xl transition-all active:scale-95 cursor-pointer border border-red-200/50 flex items-center justify-center gap-2 w-full sm:w-auto"
+              >
+                <UserMinus className="w-5 h-5 md:w-4 md:h-4" />
+                Zero Out Balance
+              </button>
+            )}
           </div>
           
           <div className="p-6 md:p-8">
@@ -1257,186 +1333,93 @@ export default function AdminDashboard() {
                 <p className="text-sm font-medium text-brand-charcoal">No scans recorded for this user yet.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="border-b border-gray-200 text-brand-charcoal text-xs font-medium uppercase tracking-wide">
-                      <th className="py-3 px-6 font-medium">QR Token</th>
-                      <th className="py-3 px-6 font-medium">Lot No.</th>
-                      <th className="py-3 px-6 font-medium">Date Scanned</th>
-                      <th className="py-3 px-6 font-medium">Points</th>
-                      <th className="py-3 px-6 font-medium text-right">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100 bg-white">
-                    {userHistory.map((item, idx) => (
-                      <tr key={item.uid || idx} className={`transition-colors text-sm ${item.zeroedOut ? 'bg-red-50/30' : 'hover:bg-gray-50'}`}>
-                        <td className="py-4 px-6 font-mono text-brand-charcoal">
-                          {item.uid ? item.uid.slice(0, 8) + '...' : 'UNKNOWN'}
-                        </td>
-                        <td className="py-4 px-6 font-mono text-brand-charcoal font-bold">
-                          {String(item.lotNumber).padStart(3, '0')}
-                        </td>
-                        <td className="py-4 px-6 text-brand-charcoal flex items-center gap-1.5">
-                          <Calendar className="w-3.5 h-3.5" />
-                          {item.claimedAt ? new Date(item.claimedAt).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Unknown'}
-                        </td>
-                        <td className={`py-4 px-6 font-semibold ${item.zeroedOut ? 'text-gray-400 line-through' : 'text-brand-charcoal'}`}>
-                          +{item.points} pts
-                        </td>
-                        <td className="py-4 px-6 text-right">
+              <div className="flex-1 w-full bg-white md:rounded-[24px] border border-gray-200 overflow-hidden shadow-sm">
+                {/* Desktop Header */}
+                <div className="hidden md:grid grid-cols-[minmax(0,4fr)_minmax(0,2fr)_minmax(0,2fr)_minmax(0,2fr)] border-b border-gray-300 text-[#11358B] text-xs font-bold uppercase tracking-widest bg-[#F8FAFC] divide-x divide-gray-300 rounded-t-[24px]">
+                  <div className="px-6 py-4">Transaction</div>
+                  <div className="px-6 py-4">Date</div>
+                  <div className="px-6 py-4 text-right">Points</div>
+                  <div className="px-6 py-4 text-right">Status</div>
+                </div>
+
+                {/* Grid Body */}
+                <div className="flex flex-col divide-y divide-gray-300 bg-white">
+                  {userHistory.map((item, idx) => (
+                    <div 
+                      key={item.uid || idx} 
+                      className={`transition-colors flex flex-col md:grid md:grid-cols-[minmax(0,4fr)_minmax(0,2fr)_minmax(0,2fr)_minmax(0,2fr)] md:items-stretch md:divide-x md:divide-gray-300 ${item.zeroedOut ? 'bg-red-50/10 hover:bg-red-50/30' : 'hover:bg-[#F8FAFC]/60'}`}
+                    >
+                      {/* Top Row on Mobile, Column 1 on Desktop */}
+                      <div className="flex items-start justify-between md:justify-start w-full md:w-auto p-4 md:px-6 md:py-4 md:items-center">
+                        <div className="flex items-center gap-3 md:gap-4">
+                          <div className="w-10 h-10 md:w-12 md:h-12 rounded-[12px] bg-[#11358B] text-white flex items-center justify-center shrink-0 shadow-sm">
+                            <QrCode className="w-4 h-4 md:w-5 md:h-5" />
+                          </div>
+                          <div className="flex flex-col">
+                            <p className="font-extrabold text-[#11358B] text-sm md:text-base leading-tight">LOT {String(item.lotNumber || 0).padStart(3, '0')}</p>
+                            <p className="font-mono text-gray-500 text-xs mt-0.5">{item.uid ? item.uid.slice(0, 8) + '...' : 'UNKNOWN'}</p>
+                          </div>
+                        </div>
+                        
+                        {/* Points + Status (Mobile Top Right) */}
+                        <div className="flex flex-col items-end md:hidden shrink-0">
+                          <span className={`font-black text-lg ${item.zeroedOut ? 'text-gray-400 line-through' : 'text-[#6192FC]'}`}>
+                            +{item.points}
+                          </span>
                           {item.zeroedOut ? (
-                            <span className="px-2.5 py-1 bg-red-100 text-red-700 text-[10px] font-bold rounded-full uppercase tracking-wider border border-red-200">
-                              Zeroed Out
-                            </span>
+                             <span className="mt-1 text-[10px] font-bold text-rose-500 uppercase tracking-wider">Withdrawn</span>
                           ) : (
-                            <span className="px-2.5 py-1 bg-brand-blue-50 text-brand-blue text-[10px] font-bold rounded-full uppercase tracking-wider border border-brand-blue-50">
-                              Active
-                            </span>
+                             <span className="mt-1 text-[10px] font-bold text-[#6B8500] uppercase tracking-wider flex items-center gap-1"><CheckCircle className="w-3 h-3" /> Active</span>
                           )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </div>
+                      </div>
+
+                      {/* Middle Row on Mobile, Column 2 on Desktop */}
+                      <div className="text-[#11358B] flex md:flex-col items-center md:items-start justify-between md:justify-center text-sm ml-[52px] md:ml-0 mt-1 md:mt-0 px-4 pb-4 md:px-6 md:py-4">
+                        <span className="font-bold md:font-extrabold text-gray-700 md:text-[#11358B]">{item.claimedAt ? new Date(item.claimedAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recently'}</span>
+                        <span className="text-gray-500 text-xs font-medium flex items-center gap-1.5 md:mt-1"><Clock className="w-3.5 h-3.5" /> {item.claimedAt ? new Date(item.claimedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : ''}</span>
+                      </div>
+
+                      {/* Desktop Columns 3 & 4 */}
+                      <div className="hidden md:flex justify-end items-center font-black text-lg px-6 py-4">
+                        <span className={item.zeroedOut ? 'text-gray-400 line-through' : 'text-[#6192FC]'}>
+                          +{item.points}
+                        </span>
+                      </div>
+                      <div className="hidden md:flex justify-end items-center px-6 py-4">
+                        {item.zeroedOut ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-50 text-rose-600 border border-rose-100">
+                            Withdrawn
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#f4fce0] text-[#11358B] border border-[#e5f5b5]">
+                            <CheckCircle className="w-4 h-4" />
+                            Active
+                          </span>
+                        )}
+                      </div>
+
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
         </motion.div>
       )}
-      </AnimatePresence>
-      </div>
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
       </motion.div>
       )}
 
       </AnimatePresence>
       </div>
 
-      {/* Section 3: Diagnostic Trace Console */}
-      <div className="print:hidden w-full bg-brand-charcoal text-slate-100 border border-brand-charcoal rounded-3xl shadow-lg overflow-hidden font-mono mt-8">
-        <div className="p-4 md:px-6 bg-slate-950 border-b border-brand-charcoal flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
-            <div className="w-2.5 h-2.5 rounded-full bg-amber-500"></div>
-            <div className="w-2.5 h-2.5 rounded-full bg-brand-blue"></div>
-            <span className="text-xs font-bold text-slate-400 pl-2">System Diagnostics Console</span>
-          </div>
-          <div className="flex items-center gap-2.5">
-            <button
-              onClick={() => {
-                setDiagnosticLogs([]);
-                const timeStr = new Date().toLocaleTimeString();
-                setDiagnosticLogs([`[${timeStr}] [SYSTEM] Diagnostic logs reset by Administrator.`]);
-              }}
-              className="px-2.5 py-1 hover:bg-brand-charcoal hover:text-white transition-colors text-[10px] text-slate-400 border border-brand-charcoal rounded-md cursor-pointer"
-            >
-              Clear Logs
-            </button>
-            <button
-              onClick={() => {
-                setShowLogs(!showLogs);
-              }}
-              className="px-2.5 py-1 hover:bg-brand-charcoal hover:text-white transition-colors text-[10px] text-slate-400 border border-brand-charcoal rounded-md cursor-pointer"
-            >
-              {showLogs ? 'Collapse' : 'Expand'}
-            </button>
-          </div>
-        </div>
 
-        {showLogs && (
-          <div className="p-4 md:p-6 bg-brand-charcoal/90 text-[11px] leading-relaxed max-h-60 overflow-y-auto space-y-1.5 scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
-            {diagnosticLogs.length > 0 ? (
-              diagnosticLogs.map((logStr, idx) => {
-                let colorClass = 'text-slate-300';
-                if (logStr.includes('[ERROR]')) colorClass = 'text-rose-400 font-semibold';
-                if (logStr.includes('[SUCCESS]')) colorClass = 'text-emerald-400 font-semibold';
-                if (logStr.includes('[ACTION]')) colorClass = 'text-blue-300';
-                if (logStr.includes('[NETWORK]')) colorClass = 'text-brand-blue-50';
-                if (logStr.includes('[WARNING]')) colorClass = 'text-amber-400';
-                
-                return (
-                  <div key={idx} className={`${colorClass} whitespace-pre-wrap select-all`}>
-                    {logStr}
-                  </div>
-                );
-              })
-            ) : (
-              <div className="text-brand-charcoal italic text-center py-4">
-                No telemetry traces generated yet. Perform dashboard operations above to view diagnostic logs.
-              </div>
-            )}
-          </div>
-        )}
-      </div>
 
-      {/* Stateful interactive confirmation modal */}
-      <AnimatePresence>
-        {resetConfirmation && (
-          <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              className="bg-white border border-gray-100 rounded-3xl shadow-2xl max-w-md w-full overflow-hidden"
-            >
-              {/* Alert Header */}
-              <div className="bg-red-50 p-6 border-b border-red-100 flex items-center gap-4">
-                <div className="p-3 bg-red-100/80 text-red-600 rounded-2xl">
-                  <UserMinus className="w-6 h-6 animate-pulse" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-brand-charcoal">Authorize Cash Payout</h3>
-                  <p className="text-xs text-red-700 font-bold mt-0.5 font-mono">CRITICAL DATABASE WRITE</p>
-                </div>
-              </div>
 
-              {/* Client specifications and notice */}
-              <div className="p-6 md:p-8 space-y-5">
-                <div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-2.5">Beneficiary Credentials</p>
-                  <div className="space-y-2 bg-slate-50 p-4 rounded-2xl border border-gray-100">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-400">Name:</span>
-                      <span className="font-extrabold text-brand-charcoal">{resetConfirmation.name}</span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-400">Mobile Number:</span>
-                      <span className="font-mono font-bold text-brand-charcoal">{resetConfirmation.phone}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-4 flex gap-3 text-amber-900 text-xs leading-relaxed">
-                  <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                  <div>
-                    <strong>Action Required:</strong> Please ensure that you physical log this payout, hand the cash or rewards equivalent to the customer, and then authorize below to clear their accrued points ledger on the live database.
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="bg-slate-50 px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={cancelResetPoints}
-                  className="px-4 py-2.5 bg-white hover:bg-gray-100 text-brand-charcoal font-bold rounded-xl text-xs transition-colors cursor-pointer border border-gray-200"
-                >
-                  Keep Points Balance
-                </button>
-                <button
-                  type="button"
-                  onClick={executeResetPoints}
-                  className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  Confirm Payout & Zero Out
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
 
     </div>
   );

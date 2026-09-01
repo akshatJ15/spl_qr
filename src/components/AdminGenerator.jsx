@@ -59,18 +59,24 @@ export default function AdminGenerator() {
         const { Filesystem, Directory } = await import('@capacitor/filesystem');
         const html2canvas = (await import('html2canvas')).default;
         
-        const printArea = document.querySelector('.print-area') || document.body;
+        const printArea = document.querySelector('#printable-qr-area') || document.body;
         const canvas = await html2canvas(printArea, { scale: 2, useCORS: true });
         const dataUrl = canvas.toDataURL('image/png');
         
         const fileName = `QR-${new Date().getTime()}.png`;
+        const base64Data = dataUrl.split(',')[1];
         const savedFile = await Filesystem.writeFile({
           path: fileName,
-          data: dataUrl.split(',')[1],
+          data: base64Data,
           directory: Directory.Cache
         });
         
-        await Share.share({ url: savedFile.uri });
+        await Share.share({ 
+          title: 'QR Code',
+          text: 'Here is your generated QR code',
+          url: savedFile.uri,
+          dialogTitle: 'Share QR Code'
+        });
         return;
       }
     } catch (e) {
@@ -200,9 +206,9 @@ export default function AdminGenerator() {
               <div className="no-print-border w-[260px] bg-white rounded-[24px] shadow-sm flex flex-col overflow-hidden relative" style={{ border: '2px dashed #CBD5E1' }}>
                 
                 {/* Header */}
-                <div className="w-full bg-[#4045CB] text-white py-3 flex items-center justify-center gap-1.5">
+                <div className="w-full bg-[#0078D7] text-white py-3 flex items-center justify-center gap-1.5">
                   <Star className="w-4 h-4 text-yellow-300 fill-yellow-300" />
-                  <span className="font-black tracking-widest text-sm uppercase">My Scan Rewards</span>
+                  <span className="font-black tracking-widest text-sm uppercase">Quick Scan Rewards</span>
                   <Star className="w-4 h-4 text-yellow-300 fill-yellow-300" />
                 </div>
 
@@ -215,7 +221,7 @@ export default function AdminGenerator() {
                       level="H"
                       includeMargin={false}
                       imageSettings={{
-                        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%234045CB'/%3E%3Ctext x='50' y='70' font-family='sans-serif' font-size='60' font-weight='900' fill='white' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E",
+                        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230078D7'/%3E%3Ctext x='50' y='70' font-family='sans-serif' font-size='60' font-weight='900' fill='white' text-anchor='middle'%3EQ%3C/text%3E%3C/svg%3E",
                         height: 40,
                         width: 40,
                         excavate: true,

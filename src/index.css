@@ -4,17 +4,24 @@
 @theme {
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   
-  --color-brand-navy: #0A3C6E;
-  --color-brand-blue: #1783C1;
+  --color-brand-navy: #0B2463;
+  --color-brand-blue: #11358B;
   --color-brand-charcoal: #333333;
   --color-brand-white: #FFFFFF;
   
   /* Lighter/Darker variants for hovers and backgrounds */
-  --color-brand-navy-light: #144f8a;
-  --color-brand-blue-light: #2099e0;
-  --color-brand-blue-50: #ebf5fb;
-  --color-brand-blue-100: #d6ebf7;
-  --color-brand-blue-200: #aed6f0;
+  --color-brand-navy-light: #16409E;
+  --color-brand-blue-light: #6192FC;
+  --color-brand-blue-50: #EFF0F4;
+  --color-brand-blue-100: #DEE1ED;
+  --color-brand-blue-200: #C1C8DF;
+  
+  /* Auth Screen V2 Inspiration Colors */
+  --color-auth-bg: #11358B;
+  --color-auth-blue-bright: #1E45FB;
+  --color-auth-blue-light: #6192FC;
+  --color-auth-accent: #C7EF66;
+  --color-auth-surface: #EFF0F4;
 }
 
 /* ===== GLOBAL BASE ===== */
